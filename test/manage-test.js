@@ -48,7 +48,7 @@ describe('Managing doc info and sheets', function() {
 
     it('should include updated timestamp', function() {
       info.updated.should.match(/\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d\.\d\d\dZ/);
-      new Date(info.updated).should.be.a.date;
+      new Date(info.updated).should.be.a('Date');
     });
 
     it('should include worksheets', function() {
@@ -56,8 +56,8 @@ describe('Managing doc info and sheets', function() {
       var sheet = info.worksheets[0];
       sheet.url.should.include(sheet_ids['private']);
       sheet.title.should.be.a.string;
-      sheet.rowCount.should.be.an.integer;
-      sheet.colCount.should.be.an.integer;
+      sheet.rowCount.should.be.a('number');
+      sheet.colCount.should.be.a('number');
     });
   });
 

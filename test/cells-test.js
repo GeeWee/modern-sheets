@@ -105,7 +105,7 @@ describe('Cell-based feeds', function() {
         'max-row': 1,
         'max-col': NUM_COLS+1
       }, function(err, cells) {
-        err.should.be.an.error;
+        err.should.be.an('Error');
         err.toString().indexOf('max-col').should.not.equal(-1);
         done();
       });
@@ -190,7 +190,7 @@ describe('Cell-based feeds', function() {
       try {
         cell.numericValue = 'abc';
       } catch (_err) { err = _err; }
-      err.should.be.an.error;
+      err.should.be.an('Error');
     });
 
     it('supports non-numeric values', function(done) {
@@ -213,7 +213,7 @@ describe('Cell-based feeds', function() {
       try {
         cell.formula = 'This is not a formula';
       } catch (_err) { err = _err; }
-      err.should.be.an.error;
+      err.should.be.an('Error');
     });
 
     it('supports formulas that resolve to a numeric value', function(done) {
