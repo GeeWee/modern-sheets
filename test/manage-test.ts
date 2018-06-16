@@ -7,48 +7,48 @@ import _ from 'lodash';
 import async from 'async';
 
 const docs = {};
-Object.keys(sheet_ids).forEach(function(key) {
+Object.keys(sheet_ids).forEach(key => {
   docs[key] = new GoogleSpreadsheet(sheet_ids[key]);
 });
 const doc = docs['private'];
 
-describe('Managing doc info and sheets', function() {
+describe('Managing doc info and sheets', () => {
   this.timeout(5000);
 
-  before(function(done) {
+  before(done => {
     doc.useServiceAccountAuth(creds, done);
   });
 
-  describe('get doc info', function() {
+  describe('get doc info', () => {
 	  let info;
 	
-	  it('can fetch the doc info', function(done) {
-      doc.getInfo(function(err, _info) {
+	  it('can fetch the doc info', done => {
+      doc.getInfo((err, _info) => {
         (!err).should.be.true;
         info = _info;
         done();
       });
     });
 
-    it('should have the doc id', function() {
+    it('should have the doc id', () => {
       info.id.should.equal('https://spreadsheets.google.com/feeds/worksheets/'+sheet_ids['private']+'/private/full')
     });
 
-    it('should include the document title', function() {
+    it('should include the document title', () => {
       info.title.should.be.a.string;
     });
 
-    it('should include author metadata', function() {
+    it('should include author metadata', () => {
       info.author.name.should.equal('theozero');
       info.author.email.should.equal('theozero@gmail.com');
     });
 
-    it('should include updated timestamp', function() {
+    it('should include updated timestamp', () => {
       info.updated.should.match(/\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d\.\d\d\dZ/);
       new Date(info.updated).should.be.a('Date');
     });
 
-    it('should include worksheets', function() {
+    it('should include worksheets', () => {
       info.worksheets.should.have.length.above(0);
 	    const sheet = info.worksheets[0];
 	    sheet.url.should.include(sheet_ids['private']);
@@ -58,28 +58,28 @@ describe('Managing doc info and sheets', function() {
     });
   });
 
-  describe('adding, removing, and modifying worksheets', function() {
+  describe('adding, removing, and modifying worksheets', () => {
 	  const sheet_title = 'Test sheet ' + (+new Date());
 	  let sheet;
 	  const sheets_to_remove = [];
 	
-	  after(function(done) {
-      async.each(sheets_to_remove, function(sheet, nextSheet) {
+	  after(done => {
+      async.each(sheets_to_remove, (sheet, nextSheet) => {
         sheet.del(nextSheet);
       }, done);
     });
 
-    it('can add a worksheet', function(done) {
+    it('can add a worksheet', done => {
       doc.addWorksheet({
         title: sheet_title,
         colCount: 10
-      }, function(err, _sheet) {
+      }, (err, _sheet) => {
         (!err).should.be.true;
         sheet = _sheet;
         sheet.title.should.equal(sheet_title);
 
         // check if the sheet is really there
-        doc.getInfo(function(err, info) {
+        doc.getInfo((err, info) => {
           (!err).should.be.true;
 	        const added_sheet = info.worksheets.pop();
 	        added_sheet.title.should.equal(sheet_title);
@@ -88,13 +88,13 @@ describe('Managing doc info and sheets', function() {
       });
     });
 
-    it('can set the header row of a worksheet', function(done) {
+    it('can set the header row of a worksheet', done => {
 	    const header_vals = ['x1', 'x2', 'x3', 'x4', 'x5'];
-	    sheet.setHeaderRow(header_vals, function(err) {
-        sheet.getCells(function(err, cells) {
+	    sheet.setHeaderRow(header_vals, err => {
+        sheet.getCells((err, cells) => {
           (!err).should.be.true;
           cells.length.should.equal(5);
-          _.times(header_vals.length, function(i) {
+          _.times(header_vals.length, i => {
             cells[i].value.should.equal(header_vals[i]);
           });
           done();
@@ -102,11 +102,11 @@ describe('Managing doc info and sheets', function() {
       });
     });
 
-    it('clears the rest of the header row when setting headers', function(done) {
+    it('clears the rest of the header row when setting headers', done => {
 	    const header_vals = ['x1', 'x2'];
-	    sheet.setHeaderRow(header_vals, function(err) {
+	    sheet.setHeaderRow(header_vals, err => {
         (!err).should.be.true;
-        sheet.getCells(function(err, cells) {
+        sheet.getCells((err, cells) => {
           (!err).should.be.true;
           // only returns cells with values in them
           cells.length.should.equal(2);
@@ -115,10 +115,10 @@ describe('Managing doc info and sheets', function() {
       });
     });
 
-    it('can clear a worksheet', function(done) {
-      sheet.clear(function(err) {
+    it('can clear a worksheet', done => {
+      sheet.clear(err => {
         (!err).should.be.true;
-        sheet.getCells(function(err, cells) {
+        sheet.getCells((err, cells) => {
           (!err).should.be.true;
           // only returns cells with values in them
           cells.length.should.equal(0);
@@ -127,10 +127,10 @@ describe('Managing doc info and sheets', function() {
       });
     });
 
-    it('can resize a worksheet', function(done) {
-      sheet.resize({rowCount: 5, colCount: 7}, function(err) {
+    it('can resize a worksheet', done => {
+      sheet.resize({rowCount: 5, colCount: 7}, err => {
         (!err).should.be.true;
-        doc.getInfo(function(err, info) {
+        doc.getInfo((err, info) => {
           (!err).should.be.true;
 	        const last_sheet = info.worksheets.pop();
 	        last_sheet.rowCount.should.equal(5);
@@ -140,11 +140,11 @@ describe('Managing doc info and sheets', function() {
       });
     });
 
-    it('can set the title of a worksheet', function(done) {
+    it('can set the title of a worksheet', done => {
 	    const new_title = 'New title ' + (+new Date());
-	    sheet.setTitle(new_title, function(err) {
+	    sheet.setTitle(new_title, err => {
         (!err).should.be.true;
-        doc.getInfo(function(err, info) {
+        doc.getInfo((err, info) => {
           (!err).should.be.true;
 	        const last_sheet = info.worksheets.pop();
 	        last_sheet.title.should.equal(new_title);
@@ -153,11 +153,11 @@ describe('Managing doc info and sheets', function() {
       });
     });
 
-    it('can delete a worksheet with `SpreadsheetWorksheet.del()`', function(done) {
-      sheet.del(function(err) {
+    it('can delete a worksheet with `SpreadsheetWorksheet.del()`', done => {
+      sheet.del(err => {
         (!err).should.be.true;
         // check if the sheet is really gone
-        doc.getInfo(function(err, info) {
+        doc.getInfo((err, info) => {
           (!err).should.be.true;
 	        const last_sheet = info.worksheets.pop();
 	        last_sheet.title.should.not.equal(sheet_title);
@@ -166,15 +166,15 @@ describe('Managing doc info and sheets', function() {
       });
     });
 
-    it('can delete a worksheet with `GoogleSpreadsheet.removeWorksheet()` passing the sheet object', function(done) {
+    it('can delete a worksheet with `GoogleSpreadsheet.removeWorksheet()` passing the sheet object', done => {
       doc.addWorksheet({
         title: sheet_title,
         colCount: 10
-      }, function(err, _sheet) {
+      }, (err, _sheet) => {
         (!err).should.be.true;
-        doc.removeWorksheet(_sheet, function(err) {
+        doc.removeWorksheet(_sheet, err => {
           (!err).should.be.true;
-          doc.getInfo(function(err, info) {
+          doc.getInfo((err, info) => {
             (!err).should.be.true;
 	          const last_sheet = info.worksheets.pop();
 	          last_sheet.title.should.not.equal(sheet_title);
@@ -184,15 +184,15 @@ describe('Managing doc info and sheets', function() {
       });
     });
 
-    it('can delete a worksheet with `GoogleSpreadsheet.removeWorksheet()` passing the sheet ID', function(done) {
+    it('can delete a worksheet with `GoogleSpreadsheet.removeWorksheet()` passing the sheet ID', done => {
       doc.addWorksheet({
         title: sheet_title,
         colCount: 10
-      }, function(err, _sheet) {
+      }, (err, _sheet) => {
         (!err).should.be.true;
-        doc.removeWorksheet(_sheet.id, function(err) {
+        doc.removeWorksheet(_sheet.id, err => {
           (!err).should.be.true;
-          doc.getInfo(function(err, info) {
+          doc.getInfo((err, info) => {
             (!err).should.be.true;
 	          const last_sheet = info.worksheets.pop();
 	          last_sheet.title.should.not.equal(sheet_title);
@@ -202,20 +202,20 @@ describe('Managing doc info and sheets', function() {
       });
     });
 
-    it('can delete a worksheet with `GoogleSpreadsheet.removeWorksheet()` passing the index of the sheet', function(done) {
+    it('can delete a worksheet with `GoogleSpreadsheet.removeWorksheet()` passing the index of the sheet', done => {
       doc.addWorksheet({
         title: sheet_title,
         colCount: 10
-      }, function(err, _sheet) {
+      }, (err, _sheet) => {
         (!err).should.be.true;
 
-        doc.getInfo(function(err, info) {
+        doc.getInfo((err, info) => {
           (!err).should.be.true;
 	        const sheet_index = info.worksheets.length;
 	
-	        doc.removeWorksheet(sheet_index, function(err) {
+	        doc.removeWorksheet(sheet_index, err => {
             (!err).should.be.true;
-            doc.getInfo(function(err, info) {
+            doc.getInfo((err, info) => {
               (!err).should.be.true;
 	            const last_sheet = info.worksheets.pop();
 	            last_sheet.title.should.not.equal(sheet_title);
@@ -226,16 +226,16 @@ describe('Managing doc info and sheets', function() {
       });
     });
 
-    it('can add a sheet with specific number of rows and columns', function(done) {
+    it('can add a sheet with specific number of rows and columns', done => {
       doc.addWorksheet({
         title: sheet_title,
         rowCount: 17,
         colCount: 13
-      }, function(err, sheet) {
+      }, (err, sheet) => {
         (!err).should.be.true;
         sheets_to_remove.push(sheet);
 
-        doc.getInfo(function(err, info) {
+        doc.getInfo((err, info) => {
           (!err).should.be.true;
 	        const new_sheet = info.worksheets.pop();
 	        new_sheet.rowCount.should.equal(17);
@@ -245,13 +245,13 @@ describe('Managing doc info and sheets', function() {
       });
     });
 
-    it('can specify column headers while adding a sheet', function(done) {
+    it('can specify column headers while adding a sheet', done => {
       doc.addWorksheet({
         headers: ['header1', 'header2', 'header3']
-      }, function(err, sheet) {
+      }, (err, sheet) => {
         (!err).should.be.true;
         sheets_to_remove.push(sheet);
-        sheet.getCells(function(err, cells) {
+        sheet.getCells((err, cells) => {
           (!err).should.be.true;
           cells.length.should.equal(3);
           cells[0].value.should.equal('header1');

@@ -9,7 +9,7 @@ import { should } from 'chai';
 should();
 
 const docs = {};
-Object.keys(sheet_ids).forEach(function(key) {
+Object.keys(sheet_ids).forEach(key => {
   docs[key] = new GoogleSpreadsheet(sheet_ids[key]);
 });
 const doc = docs['private'];
@@ -22,15 +22,15 @@ const LETTERS = ['C', 'D', 'E', 'A', 'B'];
 describe('Row-based feeds', function() {
   this.timeout(5000);
 
-  before(function(done) {
+  before(done => {
     asynclib.series({
-      setupAuth: function(step) {
+      setupAuth: step => {
         doc.useServiceAccountAuth(creds, step);
       },
-      addSheet: function(step) {
+      addSheet: step => {
         doc.addWorksheet({
           headers: ['col1', 'col2', 'col3']
-        }, function(err, _sheet) {
+        }, (err, _sheet) => {
           sheet = _sheet;
           step(err);
         });
@@ -38,21 +38,21 @@ describe('Row-based feeds', function() {
     }, done);
   });
 
-  after(function(done) {
+  after(done => {
     sheet.del(done);
   });
 
-  describe('adding, updating, removing rows', function() {
+  describe('adding, updating, removing rows', () => {
 	  let row;
 	
-	  it('can add a row', function(done) {
+	  it('can add a row', done => {
 	    const new_data = {
 		    col1: 'c1',
 		    col2: 'c2',
 		    col3: 'c3'
 	    };
 	
-	    sheet.addRow(new_data, function(err, _row) {
+	    sheet.addRow(new_data, (err, _row) => {
         (err == null).should.be.true;
         row = _row;
         row.col1.should.equal(new_data.col1);
@@ -62,17 +62,17 @@ describe('Row-based feeds', function() {
       });
     });
 
-    it('can update a row', function(done) {
+    it('can update a row', done => {
       row.col1 = 'col1-update';
       row.col2 = 'col2-update';
-      row.save(function(err) {
+      row.save(err => {
         (err == null).should.be.true;
         done();
       });
     });
 
-    it('persisted the row update', function(done) {
-      sheet.getRows(function(err, rows) {
+    it('persisted the row update', done => {
+      sheet.getRows((err, rows) => {
         rows.length.should.equal(1);
         rows[0].col1.should.equal(row.col1);
         rows[0].col2.should.equal(row.col2);
@@ -81,15 +81,15 @@ describe('Row-based feeds', function() {
       });
     });
 
-    it('can write a formula', function(done) {
+    it('can write a formula', done => {
       row.col1 = 1;
       row.col2 = 2;
       row.col3 = '=A2+B2';
       row.save(done);
     });
 
-    it('can read (only) the value from a formula', function(done) {
-      sheet.getRows(function(err, rows) {
+    it('can read (only) the value from a formula', done => {
+      sheet.getRows((err, rows) => {
         rows[0].col3.should.equal('3');
         done(err);
       });
@@ -98,12 +98,12 @@ describe('Row-based feeds', function() {
     _.each({
       'new lines': "new\n\nlines\n",
       'special chars': "∑πécial <> chårs = !\t"
-    }, function(value, description) {
-      it('supports '+description, function(done) {
+    }, (value, description) => {
+      it('supports '+description, done => {
         row.col1 = value;
-        row.save(function(err) {
+        row.save(err => {
           (err == null).should.be.true;
-          sheet.getRows(function(err, rows) {
+          sheet.getRows((err, rows) => {
             rows.length.should.equal(1);
             rows[0].col1.should.equal(value);
             done(err);
@@ -112,10 +112,10 @@ describe('Row-based feeds', function() {
       });
     });
 
-    it('can delete a row', function(done) {
-      row.del(function(err) {
+    it('can delete a row', done => {
+      row.del(err => {
         (err == null).should.be.true;
-        sheet.getRows(function(err, rows) {
+        sheet.getRows((err, rows) => {
           rows.length.should.equal(0);
           done(err);
         });
@@ -127,7 +127,7 @@ describe('Row-based feeds', function() {
     // add 5 rows to use for read tests
     before(function(done) {
       this.timeout(5000);
-      asynclib.eachSeries(NUMBERS, function(i, nextVal) {
+      asynclib.eachSeries(NUMBERS, (i, nextVal) => {
         sheet.addRow({
           col1: i,
           col2: LETTERS[i],
@@ -136,31 +136,31 @@ describe('Row-based feeds', function() {
       }, done);
     });
 
-    it('can fetch multiple rows', function(done) {
-      sheet.getRows(function(err, rows) {
+    it('can fetch multiple rows', done => {
+      sheet.getRows((err, rows) => {
         rows.length.should.equal(5);
         done(err);
       });
     });
 
-    it('supports `offset` option', function(done) {
-      sheet.getRows({offset: 3}, function(err, rows) {
+    it('supports `offset` option', done => {
+      sheet.getRows({offset: 3}, (err, rows) => {
         rows.length.should.equal(MAX_NUM - 3 + 1); //offset is inclusive
         rows[0].col1.should.equal('2');
         done(err);
       });
     });
 
-    it('supports `limit` option', function(done) {
-      sheet.getRows({limit: 3}, function(err, rows) {
+    it('supports `limit` option', done => {
+      sheet.getRows({limit: 3}, (err, rows) => {
         rows.length.should.equal(3);
         rows[0].col1.should.equal('0');
         done(err);
       });
     });
 
-    it('supports `orderby` option', function(done) {
-      sheet.getRows({orderby: 'col2'}, function(err, rows) {
+    it('supports `orderby` option', done => {
+      sheet.getRows({orderby: 'col2'}, (err, rows) => {
         rows.length.should.equal(5);
         _.map(rows, 'col2').should.deep.equal(_.sortBy(LETTERS));
         done(err);
@@ -170,32 +170,32 @@ describe('Row-based feeds', function() {
 
     // GOOGLE HAS A KNOWN BUG WITH THIS!
     // see: http://stackoverflow.com/questions/32272783/google-sheets-api-reverse-order-parameter-ignored/34805432#34805432
-    it.skip('supports `reverse` option', function(done) {
-      sheet.getRows({reverse: true}, function(err, rows) {
+    it.skip('supports `reverse` option', done => {
+      sheet.getRows({reverse: true}, (err, rows) => {
         rows.length.should.equal(5);
         rows[0].col1.should.equal('4');
         done(err);
       });
     });
 
-    it('supports `query` option', function(done) {
-      sheet.getRows({query: 'col1>=2 and col1<4'}, function(err, rows) {
+    it('supports `query` option', done => {
+      sheet.getRows({query: 'col1>=2 and col1<4'}, (err, rows) => {
         rows.length.should.equal(2);
         _.map(rows, 'col1').should.include.members(['2', '3']);
         done(err);
       });
     });
 
-    it('supports `orderby`+`reverse` option', function(done) {
-      sheet.getRows({orderby: 'col2', reverse: true}, function(err, rows) {
+    it('supports `orderby`+`reverse` option', done => {
+      sheet.getRows({orderby: 'col2', reverse: true}, (err, rows) => {
         rows.length.should.equal(5);
         _.map(rows, 'col2').should.deep.equal(_.sortBy(LETTERS).reverse());
         done(err);
       });
     });
 
-    it('supports `orderby`+`limit` option', function(done) {
-      sheet.getRows({orderby: 'col2', limit: 2}, function(err, rows) {
+    it('supports `orderby`+`limit` option', done => {
+      sheet.getRows({orderby: 'col2', limit: 2}, (err, rows) => {
         rows.length.should.equal(2);
         _.map(rows, 'col2').should.deep.equal(_.sortBy(LETTERS).slice(0,2));
         done(err);
