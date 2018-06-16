@@ -7,6 +7,7 @@ import _ from 'lodash';
 import * as gal from 'google-auth-library';
 import { forceArray, xmlSafeColumnName, xmlSafeValue } from './src/utils';
 import { SpreadsheetCell } from './src/SpreadsheetCell';
+import { SpreadsheetRow } from './src/SpreadsheetRow';
 
 const GOOGLE_FEED_URL = 'https://spreadsheets.google.com/feeds/';
 const GOOGLE_AUTH_SCOPE = ['https://spreadsheets.google.com/feeds'];
@@ -466,7 +467,7 @@ var SpreadsheetWorksheet = function( spreadsheet, data ){
   }
 };
 
-var SpreadsheetRow = function( spreadsheet, data, xml ){
+var oldrow = function( spreadsheet, data, xml ){
 	const self = this;
 	self['_xml'] = xml;
   Object.keys(data).forEach(function(key) {
@@ -517,7 +518,7 @@ var SpreadsheetRow = function( spreadsheet, data, xml ){
   }
 };
 
-var blublublub: any = function( spreadsheet, worksheet_id, data ){
+var oldCell: any = function( spreadsheet, worksheet_id, data ){
 	const self = this;
 	
 	function init() {
