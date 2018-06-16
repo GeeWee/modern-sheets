@@ -12,7 +12,7 @@ Object.keys(sheet_ids).forEach(key => {
 });
 const doc = docs['private'];
 
-describe('Managing doc info and sheets', () => {
+describe('Managing doc info and sheets', function() {
   this.timeout(5000);
 
   before(done => {
