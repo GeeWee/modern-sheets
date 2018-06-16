@@ -4,7 +4,7 @@ var xml2js = require("xml2js");
 var http = require("http");
 var querystring = require("querystring");
 var _ = require('lodash');
-var GoogleAuth = require("google-auth-library");
+var gal = require("google-auth-library");
 
 var GOOGLE_FEED_URL = "https://spreadsheets.google.com/feeds/";
 var GOOGLE_AUTH_SCOPE = ["https://spreadsheets.google.com/feeds"];
@@ -21,7 +21,7 @@ var GoogleSpreadsheet = function( ss_key, auth_id, options ){
 
   var auth_mode = 'anonymous';
 
-  var auth_client = new GoogleAuth();
+  var auth_client = new gal.GoogleAuth();
   var jwt_client;
 
   options = options || {};
@@ -61,7 +61,7 @@ var GoogleSpreadsheet = function( ss_key, auth_id, options ){
         return cb(err);
       }
     }
-    jwt_client = new auth_client.JWT(creds.client_email, null, creds.private_key, GOOGLE_AUTH_SCOPE, null);
+    jwt_client = new gal.JWT(creds.client_email, null, creds.private_key, GOOGLE_AUTH_SCOPE, null);
     renewJwtAuth(cb);
   }
 
@@ -431,7 +431,7 @@ var SpreadsheetWorksheet = function( spreadsheet, data ){
       if (err) return cb(err);
 
       // update all the cells
-      var cells_by_batch_id = _.indexBy(cells, 'batchId');
+      var cells_by_batch_id = _.keyBy(cells, 'batchId');
       if (data.entry && data.entry.length) data.entry.forEach(function(cell_data) {
         cells_by_batch_id[cell_data['batch:id']].updateValuesFromResponseData(cell_data);
       });
