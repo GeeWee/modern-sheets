@@ -51,7 +51,7 @@ export class SpreadsheetCell {
 		}
 		
 		// the main "value" - its always a string
-		this.value = _data['gs:cell']['_'] || '';
+		this._value = _data['gs:cell']['_'] || '';
 	};
 	
 	setValue = (new_value, cb) => {
@@ -62,7 +62,7 @@ export class SpreadsheetCell {
 	_clearValue = () => {
 		this._formula = undefined;
 		this._numericValue = undefined;
-		this.value = '';
+		this._value = '';
 	};
 	
 	save = (cb) => {
@@ -101,10 +101,10 @@ export class SpreadsheetCell {
 		const numeric_val = parseFloat(val);
 		if (!isNaN(numeric_val)){
 			this._numericValue = numeric_val;
-			this.value = val.toString();
+			this._value = val.toString();
 		} else {
 			this._numericValue = undefined;
-			this.value = val;
+			this._value = val;
 		}
 		
 		if (typeof val == 'string' && val.substr(0,1) === '=') {
@@ -129,7 +129,7 @@ export class SpreadsheetCell {
 			throw new Error('Formulas must start with "="');
 		}
 		this._numericValue = undefined;
-		this.value = '*SAVE TO GET NEW VALUE*';
+		this._value = '*SAVE TO GET NEW VALUE*';
 		this._formula = val;
 	}
 	
@@ -147,12 +147,12 @@ export class SpreadsheetCell {
 			throw new Error('Invalid numeric value assignment');
 		}
 		
-		this.value = val.toString();
+		this._value = val.toString();
 		this._numericValue = parseFloat(val as any);
 		this._formula = undefined;
 	}
 	
 	get valueForSave(){
-		return xmlSafeValue(this._formula || this.value);
+		return xmlSafeValue(this._formula || this._value);
 	}
 }
