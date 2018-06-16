@@ -1,18 +1,16 @@
-var path = require('path');
-var should = require('chai').should();
-var async = require('async');
-var _ = require('lodash');
+import { describe, it } from 'mocha';
 
-var GoogleSpreadsheet = require("../index.ts");
+import creds from './service-account-creds.json';
+import sheet_ids from './config';
+import {GoogleSpreadsheet} from '../index';
+import _ from 'lodash';
+import async from 'async';
+import path from 'path';
 
-var sheet_ids = require('./config');
-
-var docs = {};
+const docs = {};
 Object.keys(sheet_ids).forEach(function(key) {
   docs[key] = new GoogleSpreadsheet(sheet_ids[key]);
 });
-
-var creds = require('./service-account-creds.json');
 
 function getSheetName() { return 'test sheet'+(+new Date()); }
 
@@ -92,8 +90,8 @@ describe('Authentication', function() {
     });
 
     it('should fail if the email and key do not match', function(done) {
-      var bad_creds = _.clone(creds);
-      bad_creds.client_email = 'a'+bad_creds.client_email;
+	    const bad_creds = _.clone(creds);
+	    bad_creds.client_email = 'a'+bad_creds.client_email;
       docs['private'].useServiceAccountAuth(bad_creds, function(err) {
         err.should.be.an('Error');
         done();
@@ -108,16 +106,16 @@ describe('Authentication', function() {
     });
 
     it('should accept a string which is a path to the file', function(done) {
-      var creds_file_path = path.resolve(__dirname+'/service-account-creds.json');
-      docs['private'].useServiceAccountAuth(creds_file_path, function(err) {
+	    const creds_file_path = path.resolve(__dirname + '/service-account-creds.json');
+	    docs['private'].useServiceAccountAuth(creds_file_path, function(err) {
         (err == null).should.be.true;
         done();
       });
     });
 
     it('should fail if the path is invalid', function(done) {
-      var creds_file_path = path.resolve(__dirname+'/doesnt-exist.json');
-      docs['private'].useServiceAccountAuth(creds_file_path, function(err) {
+	    const creds_file_path = path.resolve(__dirname + '/doesnt-exist.json');
+	    docs['private'].useServiceAccountAuth(creds_file_path, function(err) {
         err.should.be.an('Error');
         done();
       });

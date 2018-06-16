@@ -1,30 +1,29 @@
-var should = require('chai').should();
-var async = require('async');
-var _ = require('lodash');
+import asynclib from 'async';
+import { after, describe, before, it } from 'mocha';
+import creds from './service-account-creds.json';
+import sheet_ids from './config';
+import {GoogleSpreadsheet} from '../index';
+import _ from 'lodash';
 
-var GoogleSpreadsheet = require("../index.ts");
+import { should } from 'chai';
+should();
 
-var sheet_ids = require('./config');
-
-var docs = {};
+const docs = {};
 Object.keys(sheet_ids).forEach(function(key) {
   docs[key] = new GoogleSpreadsheet(sheet_ids[key]);
 });
+const doc = docs['private'];
+let sheet;
 
-var creds = require('./service-account-creds.json');
-
-var doc = docs['private'];
-var sheet;
-
-var MAX_NUM = 5;
-var NUMBERS = _.times(MAX_NUM);
-var LETTERS = ['C', 'D', 'E', 'A', 'B']
+const MAX_NUM = 5;
+const NUMBERS = _.times(MAX_NUM);
+const LETTERS = ['C', 'D', 'E', 'A', 'B'];
 
 describe('Row-based feeds', function() {
   this.timeout(5000);
 
   before(function(done) {
-    async.series({
+    asynclib.series({
       setupAuth: function(step) {
         doc.useServiceAccountAuth(creds, step);
       },
@@ -44,16 +43,16 @@ describe('Row-based feeds', function() {
   });
 
   describe('adding, updating, removing rows', function() {
-    var row;
-
-    it('can add a row', function(done) {
-      var new_data = {
-        col1: 'c1',
-        col2: 'c2',
-        col3: 'c3'
-      };
-
-      sheet.addRow(new_data, function(err, _row) {
+	  let row;
+	
+	  it('can add a row', function(done) {
+	    const new_data = {
+		    col1: 'c1',
+		    col2: 'c2',
+		    col3: 'c3'
+	    };
+	
+	    sheet.addRow(new_data, function(err, _row) {
         (err == null).should.be.true;
         row = _row;
         row.col1.should.equal(new_data.col1);
@@ -128,7 +127,7 @@ describe('Row-based feeds', function() {
     // add 5 rows to use for read tests
     before(function(done) {
       this.timeout(5000);
-      async.eachSeries(NUMBERS, function(i, nextVal) {
+      asynclib.eachSeries(NUMBERS, function(i, nextVal) {
         sheet.addRow({
           col1: i,
           col2: LETTERS[i],

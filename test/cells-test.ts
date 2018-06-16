@@ -1,23 +1,21 @@
-var should = require('chai').should();
-var async = require('async');
-var _ = require('lodash');
+import { after, describe, before, it } from 'mocha';
 
-var GoogleSpreadsheet = require("../index.ts");
+import {GoogleSpreadsheet} from '../index';
 
-var sheet_ids = require('./config');
+import creds from './service-account-creds.json';
+import sheet_ids from './config';
+import _ from 'lodash';
+import async from 'async';
 
-var docs = {};
+const docs = {};
 Object.keys(sheet_ids).forEach(function(key) {
   docs[key] = new GoogleSpreadsheet(sheet_ids[key]);
 });
+const doc = docs['private'];
+let sheet;
 
-var creds = require('./service-account-creds.json');
-
-var doc = docs['private'];
-var sheet;
-
-var NUM_ROWS = 10;
-var NUM_COLS = 10;
+const NUM_ROWS = 10;
+const NUM_COLS = 10;
 
 describe('Cell-based feeds', function() {
   this.timeout(5000);
@@ -113,9 +111,9 @@ describe('Cell-based feeds', function() {
   });
 
   describe('manipulating cell data', function() {
-    var cell;
-
-    before(function(done) {
+	  let cell;
+	
+	  before(function(done) {
       sheet.getCells({
         'return-empty': true
       }, function(err, cells) {
@@ -186,8 +184,8 @@ describe('Cell-based feeds', function() {
     });
 
     it('throws an error if an invalid `numericValue` is set', function() {
-      var err;
-      try {
+	    let err;
+	    try {
         cell.numericValue = 'abc';
       } catch (_err) { err = _err; }
       err.should.be.an('Error');
@@ -209,8 +207,8 @@ describe('Cell-based feeds', function() {
     });
 
     it('throws an error if setting an invalid formula', function() {
-      var err;
-      try {
+	    let err;
+	    try {
         cell.formula = 'This is not a formula';
       } catch (_err) { err = _err; }
       err.should.be.an('Error');
@@ -293,9 +291,9 @@ describe('Cell-based feeds', function() {
   });
 
   describe('bulk cell updates', function() {
-    var cells;
-
-    before(function(done) {
+	  let cells;
+	
+	  before(function(done) {
       sheet.getCells({
         'return-empty': true
       }, function(err, _cells) {

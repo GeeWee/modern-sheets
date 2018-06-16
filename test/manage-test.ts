@@ -1,19 +1,16 @@
-var should = require('chai').should();
-var async = require('async');
-var _ = require('lodash');
+import { after, describe, before, it } from 'mocha';
 
-var GoogleSpreadsheet = require("../index.ts");
+import creds from './service-account-creds.json';
+import sheet_ids from './config';
+import {GoogleSpreadsheet} from '../index';
+import _ from 'lodash';
+import async from 'async';
 
-var sheet_ids = require('./config');
-
-var docs = {};
+const docs = {};
 Object.keys(sheet_ids).forEach(function(key) {
   docs[key] = new GoogleSpreadsheet(sheet_ids[key]);
 });
-
-var creds = require('./service-account-creds.json');
-
-var doc = docs['private'];
+const doc = docs['private'];
 
 describe('Managing doc info and sheets', function() {
   this.timeout(5000);
@@ -23,9 +20,9 @@ describe('Managing doc info and sheets', function() {
   });
 
   describe('get doc info', function() {
-    var info;
-
-    it('can fetch the doc info', function(done) {
+	  let info;
+	
+	  it('can fetch the doc info', function(done) {
       doc.getInfo(function(err, _info) {
         (!err).should.be.true;
         info = _info;
@@ -53,8 +50,8 @@ describe('Managing doc info and sheets', function() {
 
     it('should include worksheets', function() {
       info.worksheets.should.have.length.above(0);
-      var sheet = info.worksheets[0];
-      sheet.url.should.include(sheet_ids['private']);
+	    const sheet = info.worksheets[0];
+	    sheet.url.should.include(sheet_ids['private']);
       sheet.title.should.be.a.string;
       sheet.rowCount.should.be.a('number');
       sheet.colCount.should.be.a('number');
@@ -62,11 +59,11 @@ describe('Managing doc info and sheets', function() {
   });
 
   describe('adding, removing, and modifying worksheets', function() {
-    var sheet_title = 'Test sheet '+(+new Date());
-    var sheet;
-    var sheets_to_remove = []
-
-    after(function(done) {
+	  const sheet_title = 'Test sheet ' + (+new Date());
+	  let sheet;
+	  const sheets_to_remove = [];
+	
+	  after(function(done) {
       async.each(sheets_to_remove, function(sheet, nextSheet) {
         sheet.del(nextSheet);
       }, done);
@@ -84,16 +81,16 @@ describe('Managing doc info and sheets', function() {
         // check if the sheet is really there
         doc.getInfo(function(err, info) {
           (!err).should.be.true;
-          var added_sheet = info.worksheets.pop();
-          added_sheet.title.should.equal(sheet_title)
+	        const added_sheet = info.worksheets.pop();
+	        added_sheet.title.should.equal(sheet_title);
           done();
         });
       });
     });
 
     it('can set the header row of a worksheet', function(done) {
-      var header_vals = ['x1', 'x2', 'x3', 'x4', 'x5'];
-      sheet.setHeaderRow(header_vals, function(err) {
+	    const header_vals = ['x1', 'x2', 'x3', 'x4', 'x5'];
+	    sheet.setHeaderRow(header_vals, function(err) {
         sheet.getCells(function(err, cells) {
           (!err).should.be.true;
           cells.length.should.equal(5);
@@ -106,8 +103,8 @@ describe('Managing doc info and sheets', function() {
     });
 
     it('clears the rest of the header row when setting headers', function(done) {
-      var header_vals = ['x1', 'x2'];
-      sheet.setHeaderRow(header_vals, function(err) {
+	    const header_vals = ['x1', 'x2'];
+	    sheet.setHeaderRow(header_vals, function(err) {
         (!err).should.be.true;
         sheet.getCells(function(err, cells) {
           (!err).should.be.true;
@@ -135,8 +132,8 @@ describe('Managing doc info and sheets', function() {
         (!err).should.be.true;
         doc.getInfo(function(err, info) {
           (!err).should.be.true;
-          var last_sheet = info.worksheets.pop();
-          last_sheet.rowCount.should.equal(5);
+	        const last_sheet = info.worksheets.pop();
+	        last_sheet.rowCount.should.equal(5);
           last_sheet.colCount.should.equal(7);
           done();
         });
@@ -144,13 +141,13 @@ describe('Managing doc info and sheets', function() {
     });
 
     it('can set the title of a worksheet', function(done) {
-      var new_title = 'New title '+(+new Date());
-      sheet.setTitle(new_title, function(err) {
+	    const new_title = 'New title ' + (+new Date());
+	    sheet.setTitle(new_title, function(err) {
         (!err).should.be.true;
         doc.getInfo(function(err, info) {
           (!err).should.be.true;
-          var last_sheet = info.worksheets.pop();
-          last_sheet.title.should.equal(new_title);
+	        const last_sheet = info.worksheets.pop();
+	        last_sheet.title.should.equal(new_title);
           done();
         });
       });
@@ -162,8 +159,8 @@ describe('Managing doc info and sheets', function() {
         // check if the sheet is really gone
         doc.getInfo(function(err, info) {
           (!err).should.be.true;
-          var last_sheet = info.worksheets.pop();
-          last_sheet.title.should.not.equal(sheet_title);
+	        const last_sheet = info.worksheets.pop();
+	        last_sheet.title.should.not.equal(sheet_title);
           done();
         });
       });
@@ -179,8 +176,8 @@ describe('Managing doc info and sheets', function() {
           (!err).should.be.true;
           doc.getInfo(function(err, info) {
             (!err).should.be.true;
-            var last_sheet = info.worksheets.pop();
-            last_sheet.title.should.not.equal(sheet_title);
+	          const last_sheet = info.worksheets.pop();
+	          last_sheet.title.should.not.equal(sheet_title);
             done();
           });
         });
@@ -197,8 +194,8 @@ describe('Managing doc info and sheets', function() {
           (!err).should.be.true;
           doc.getInfo(function(err, info) {
             (!err).should.be.true;
-            var last_sheet = info.worksheets.pop();
-            last_sheet.title.should.not.equal(sheet_title);
+	          const last_sheet = info.worksheets.pop();
+	          last_sheet.title.should.not.equal(sheet_title);
             done();
           });
         });
@@ -214,14 +211,14 @@ describe('Managing doc info and sheets', function() {
 
         doc.getInfo(function(err, info) {
           (!err).should.be.true;
-          var sheet_index = info.worksheets.length;
-
-          doc.removeWorksheet(sheet_index, function(err) {
+	        const sheet_index = info.worksheets.length;
+	
+	        doc.removeWorksheet(sheet_index, function(err) {
             (!err).should.be.true;
             doc.getInfo(function(err, info) {
               (!err).should.be.true;
-              var last_sheet = info.worksheets.pop();
-              last_sheet.title.should.not.equal(sheet_title);
+	            const last_sheet = info.worksheets.pop();
+	            last_sheet.title.should.not.equal(sheet_title);
               done();
             });
           });
@@ -240,8 +237,8 @@ describe('Managing doc info and sheets', function() {
 
         doc.getInfo(function(err, info) {
           (!err).should.be.true;
-          var new_sheet = info.worksheets.pop();
-          new_sheet.rowCount.should.equal(17);
+	        const new_sheet = info.worksheets.pop();
+	        new_sheet.rowCount.should.equal(17);
           new_sheet.colCount.should.equal(13);
           done();
         });
