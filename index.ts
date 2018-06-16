@@ -5,6 +5,8 @@ import http from 'http';
 import querystring from 'querystring';
 import _ from 'lodash';
 import * as gal from 'google-auth-library';
+import { forceArray, xmlSafeColumnName, xmlSafeValue } from './src/utils';
+import { SpreadsheetCell } from './src/SpreadsheetCell';
 
 const GOOGLE_FEED_URL = 'https://spreadsheets.google.com/feeds/';
 const GOOGLE_AUTH_SCOPE = ['https://spreadsheets.google.com/feeds'];
@@ -108,7 +110,7 @@ export const GoogleSpreadsheet: any = function (ss_key, auth_id, options) {
 			url = GOOGLE_FEED_URL + url_params.join('/');
 		}
 		
-		async.series({
+		async.series<any, any>({
 			auth: function (step) {
 				if (auth_mode != 'jwt') return step();
 				// check if jwt token is expired
@@ -515,7 +517,7 @@ var SpreadsheetRow = function( spreadsheet, data, xml ){
   }
 };
 
-var SpreadsheetCell: any = function( spreadsheet, worksheet_id, data ){
+var blublublub: any = function( spreadsheet, worksheet_id, data ){
 	const self = this;
 	
 	function init() {
@@ -648,25 +650,4 @@ var SpreadsheetCell: any = function( spreadsheet, worksheet_id, data ){
 
   init();
   return self;
-};
-
-//utils
-var forceArray = function(val) {
-  if ( Array.isArray( val ) ) return val;
-  if ( !val ) return [];
-  return [ val ];
-};
-var xmlSafeValue = function(val){
-  if ( val == null ) return '';
-  return String(val).replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/\n/g,'&#10;')
-      .replace(/\r/g,'&#13;');
-};
-var xmlSafeColumnName = function(val){
-  if (!val) return '';
-  return String(val).replace(/[\s_]+/g, '')
-      .toLowerCase();
 };

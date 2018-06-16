@@ -1,7 +1,7 @@
 import { forceArray, xmlSafeValue } from './utils';
 
 
-class SpreadsheetCell {
+export class SpreadsheetCell {
 	private id: any;
 	private row: number;
 	private col: number;
@@ -12,74 +12,6 @@ class SpreadsheetCell {
 	private spreadsheet: any;
 	private worksheet_id: any;
 	private _needsSave: boolean;
-	
-	get value() {
-		return this._value
-	}
-	set value(val){
-		if (!val) {
-			this._clearValue();
-			return;
-		}
-		
-		const numeric_val = parseFloat(val);
-		if (!isNaN(numeric_val)){
-			this._numericValue = numeric_val;
-			this._value = val.toString();
-		} else {
-			this._numericValue = undefined;
-			this._value = val;
-		}
-		
-		if (typeof val == 'string' && val.substr(0,1) === '=') {
-			// use the getter to clear the value
-			this.formula = val;
-		} else {
-			this._formula = undefined;
-		}
-	}
-	
-	get formula(){
-		return this._formula
-	}
-	
-	set formula(val){
-		if (!val) {
-			this._clearValue();
-			return;
-		}
-		
-		if (val.substr(0,1) !== '=') {
-			throw new Error('Formulas must start with "="');
-		}
-		this._numericValue = undefined;
-		this._value = '*SAVE TO GET NEW VALUE*';
-		this._formula = val;
-	}
-	
-	get numericValue(){
-		return this._numericValue
-	}
-	
-	set numericValue(val){
-		if (val === undefined || val === null) {
-			this._clearValue();
-			return;
-		}
-		
-		if (isNaN(parseFloat(val)) || !isFinite(val)) {
-			throw new Error('Invalid numeric value assignment');
-		}
-		
-		this._value = val.toString();
-		this._numericValue = parseFloat(val);
-		this._formula = undefined;
-	}
-	
-	get valueForSave(){
-		return xmlSafeValue(this._formula || this._value);
-	}
-	
 	
 	constructor(spreadsheet, worksheet_id, data){
 		let links;
@@ -93,7 +25,7 @@ class SpreadsheetCell {
 		
 		this['_links'] = [];
 		links = forceArray( data.link );
-		links.forEach( function( link ){
+		links.forEach(( link ) => {
 			this['_links'][ link['$']['rel'] ] = link['$']['href'];
 		});
 		
@@ -119,7 +51,7 @@ class SpreadsheetCell {
 		}
 		
 		// the main "value" - its always a string
-		this._value = _data['gs:cell']['_'] || '';
+		this.value = _data['gs:cell']['_'] || '';
 	};
 	
 	setValue = (new_value, cb) => {
@@ -130,7 +62,7 @@ class SpreadsheetCell {
 	_clearValue = () => {
 		this._formula = undefined;
 		this._numericValue = undefined;
-		this._value = '';
+		this.value = '';
 	};
 	
 	save = (cb) => {
@@ -145,7 +77,7 @@ class SpreadsheetCell {
 		
 		data_xml = data_xml.replace('<entry>', "<entry xmlns='http://www.w3.org/2005/Atom' xmlns:gs='http://schemas.google.com/spreadsheets/2006'>");
 		
-		this.spreadsheet.makeFeedRequest( this['_links']['edit'], 'PUT', data_xml, function(err, response) {
+		this.spreadsheet.makeFeedRequest( this['_links']['edit'], 'PUT', data_xml, (err, response) => {
 			if (err) return cb(err);
 			this.updateValuesFromResponseData(response);
 			cb();
@@ -155,4 +87,72 @@ class SpreadsheetCell {
 	del = (cb) => {
 		this.setValue('', cb);
 	};
+	
+	// GETTERS AND SETTERS
+	get value(){
+		return this._value;
+	}
+	set value(val){
+		if (!val) {
+			this._clearValue();
+			return;
+		}
+		
+		const numeric_val = parseFloat(val);
+		if (!isNaN(numeric_val)){
+			this._numericValue = numeric_val;
+			this.value = val.toString();
+		} else {
+			this._numericValue = undefined;
+			this.value = val;
+		}
+		
+		if (typeof val == 'string' && val.substr(0,1) === '=') {
+			// use the getter to clear the value
+			this.formula = val;
+		} else {
+			this._formula = undefined;
+		}
+	}
+	
+	get formula(){
+		return this._formula
+	}
+	
+	set formula(val){
+		if (!val) {
+			this._clearValue();
+			return;
+		}
+		
+		if (val.substr(0,1) !== '=') {
+			throw new Error('Formulas must start with "="');
+		}
+		this._numericValue = undefined;
+		this.value = '*SAVE TO GET NEW VALUE*';
+		this._formula = val;
+	}
+	
+	get numericValue(){
+		return this._numericValue
+	}
+	
+	set numericValue(val){
+		if (val === undefined || val === null) {
+			this._clearValue();
+			return;
+		}
+		
+		if (isNaN(parseFloat(val as any)) || !isFinite(val)) {
+			throw new Error('Invalid numeric value assignment');
+		}
+		
+		this.value = val.toString();
+		this._numericValue = parseFloat(val as any);
+		this._formula = undefined;
+	}
+	
+	get valueForSave(){
+		return xmlSafeValue(this._formula || this.value);
+	}
 }
