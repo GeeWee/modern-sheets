@@ -8,6 +8,7 @@ import * as gal from 'google-auth-library';
 import { forceArray, xmlSafeColumnName, xmlSafeValue } from './src/utils';
 import { SpreadsheetCell } from './src/SpreadsheetCell';
 import { SpreadsheetRow } from './src/SpreadsheetRow';
+import { SpreadsheetWorksheet } from './src/SpreadsheetWorksheet';
 
 const GOOGLE_FEED_URL = 'https://spreadsheets.google.com/feeds/';
 const GOOGLE_AUTH_SCOPE = ['https://spreadsheets.google.com/feeds'];
@@ -355,7 +356,7 @@ export const GoogleSpreadsheet: any = function (ss_key, auth_id, options) {
 };
 
 // Classes
-var SpreadsheetWorksheet = function( spreadsheet, data ){
+var oldspreadsheetworksheet = function( spreadsheet, data ){
 	const self = this;
 	let links;
 	
