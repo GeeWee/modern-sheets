@@ -1,4 +1,4 @@
-import { describe, it } from 'mocha';
+import { describe, it, before } from 'mocha';
 
 import creds from './service-account-creds.json';
 import sheet_ids from './config';
@@ -125,7 +125,7 @@ describe('Authentication', function() {
 
   describe('with auth', () => {
     before(done => {
-      async.each(docs, (doc, nextDoc) => {
+      async.each(docs, (doc: any, nextDoc) => {
         doc.useServiceAccountAuth(creds, nextDoc);
       }, done);
     });
