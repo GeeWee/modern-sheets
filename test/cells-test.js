@@ -105,7 +105,7 @@ describe('Cell-based feeds', function() {
         'max-row': 1,
         'max-col': NUM_COLS+1
       }, function(err, cells) {
-        err.should.be.an('Error');
+        err.should.have.string('error');
         err.toString().indexOf('max-col').should.not.equal(-1);
         done();
       });

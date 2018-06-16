@@ -23,7 +23,7 @@ describe('Authentication', function() {
     describe('reading + getInfo', function(){
       it('getInfo should fail on a private doc', function(done) {
         docs['private'].getInfo(function(err, info) {
-          err.should.be.an.error;
+          err.should.be.an('Error');
           err.message.should.include('Sheet is private.');
           err.message.should.include('Use authentication or make public.');
           done();
@@ -32,7 +32,7 @@ describe('Authentication', function() {
 
       it('should fail on a private doc', function(done) {
         docs['private'].getRows(1, function(err, rows) {
-          err.should.be.an.error;
+          err.should.be.an('Error');
           err.message.should.include('Sheet is private.');
           err.message.should.include('Use authentication or make public.');
           done();
@@ -42,7 +42,7 @@ describe('Authentication', function() {
       _.each(['public', 'public-read-only'], function(key) {
         it('reading should succeed on a '+key+' doc', function(done) {
           docs[key].getRows(1, function(err, rows) {
-            rows.should.be.an.array;
+            rows.should.be.an('array');
             done(err);
           });
         });
@@ -62,7 +62,7 @@ describe('Authentication', function() {
       _.each(['public', 'public-read-only', 'private'], function(key) {
         it('should fail on a '+key+' doc', function(done) {
           docs[key].addWorksheet(function(err, sheet) {
-            err.should.be.an.error;
+            err.should.be.an('Error');
             err.message.should.include('authenticate');
             done();
           });
@@ -76,7 +76,7 @@ describe('Authentication', function() {
   describe('authentication', function() {
     it('should fail if the token is empty', function(done) {
       docs['private'].useServiceAccountAuth({}, function(err) {
-        err.should.be.an.error;
+        err.should.be.an('Error');
         done();
       });
     });
@@ -86,7 +86,7 @@ describe('Authentication', function() {
         client_email: 'test@example.com',
         private_key: 'not-a-real-key'
       }, function(err) {
-        err.should.be.an.error;
+        err.should.be.an('Error');
         done();
       });
     });
@@ -95,7 +95,7 @@ describe('Authentication', function() {
       var bad_creds = _.clone(creds);
       bad_creds.client_email = 'a'+bad_creds.client_email;
       docs['private'].useServiceAccountAuth(bad_creds, function(err) {
-        err.should.be.an.error;
+        err.should.be.an('Error');
         done();
       });
     });
@@ -118,7 +118,7 @@ describe('Authentication', function() {
     it('should fail if the path is invalid', function(done) {
       var creds_file_path = path.resolve(__dirname+'/doesnt-exist.json');
       docs['private'].useServiceAccountAuth(creds_file_path, function(err) {
-        err.should.be.an.error;
+        err.should.be.an('Error');
         done();
       });
     });
@@ -143,7 +143,7 @@ describe('Authentication', function() {
       it('reading data succeed on a '+key+' doc', function(done) {
         docs[key].getRows(1, function(err, rows) {
           (err == null).should.be.true;
-          rows.should.be.an.array;
+          rows.should.be.an('array');
           done();
         });
       });
@@ -160,7 +160,8 @@ describe('Authentication', function() {
 
     it('writing should fail if user does not have access', function(done) {
       docs['public-read-only'].addWorksheet(function(err, sheet) {
-        err.should.be.a.error;
+      	console.log(typeof err);
+        err.should.have.string('error'); // todo nigga wtf
         done();
       });
     });
