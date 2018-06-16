@@ -2,7 +2,7 @@ var should = require('chai').should();
 var async = require('async');
 var _ = require('lodash');
 
-var GoogleSpreadsheet = require("../index.js");
+var GoogleSpreadsheet = require("../index.ts");
 
 var sheet_ids = require('./config');
 

@@ -13,7 +13,7 @@ var REQUIRE_AUTH_MESSAGE = 'You must authenticate to modify sheet data';
 
 // The main class that represents a single sheet
 // this is the main module.exports
-var GoogleSpreadsheet = function( ss_key, auth_id, options ){
+var GoogleSpreadsheet : any = function( ss_key, auth_id, options ){
   var self = this;
   var google_auth = null;
   var visibility = 'public';
@@ -515,7 +515,7 @@ var SpreadsheetRow = function( spreadsheet, data, xml ){
   }
 }
 
-var SpreadsheetCell = function( spreadsheet, worksheet_id, data ){
+var SpreadsheetCell: any = function( spreadsheet, worksheet_id, data ){
   var self = this;
 
   function init() {
