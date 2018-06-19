@@ -38,12 +38,7 @@ export class SpreadsheetWorksheet{
 	
 	_setInfo = (opts, cb) => {
 		cb = cb || _.noop;
-		const xml = ''
-			+ '<entry xmlns="http://www.w3.org/2005/Atom" xmlns:gs="http://schemas.google.com/spreadsheets/2006">'
-			+ '<title>' + (opts.title || this.title) + '</title>'
-			+ '<gs:rowCount>' + (opts.rowCount || this.rowCount) + '</gs:rowCount>'
-			+ '<gs:colCount>' + (opts.colCount || this.colCount) + '</gs:colCount>'
-			+ '</entry>';
+		const xml = `<entry xmlns="http://www.w3.org/2005/Atom" xmlns:gs="http://schemas.google.com/spreadsheets/2006"><title>${opts.title || this.title}</title><gs:rowCount>${opts.rowCount || this.rowCount}</gs:rowCount><gs:colCount>${opts.colCount || this.colCount}</gs:colCount></entry>`;
 		this.spreadsheet.makeFeedRequest(this['_links']['edit'], 'PUT', xml, (err, response) => {
 			if (err) return cb(err);
 			this.title = response.title;
@@ -90,9 +85,21 @@ export class SpreadsheetWorksheet{
 		
 		const entries = cells.map((cell, i) => {
 			cell._needsSave = false;
-			return '<entry>\n        <batch:id>' + cell.batchId + '</batch:id>\n        <batch:operation type="update"/>\n        <id>' + this['_links']['cells'] + '/' + cell.batchId + '</id>\n        <link rel="edit" type="application/atom+xml"\n          href="' + cell._links.edit + '"/>\n        <gs:cell row="' + cell.row + '" col="' + cell.col + '" inputValue="' + cell.valueForSave + '"/>\n      </entry>';
+			return `<entry>
+        <batch:id>${cell.batchId}</batch:id>
+        <batch:operation type="update"/>
+        <id>${this['_links']['cells']}/${cell.batchId}</id>
+        <link rel="edit" type="application/atom+xml"
+          href="${cell._links.edit}"/>
+        <gs:cell row="${cell.row}" col="${cell.col}" inputValue="${cell.valueForSave}"/>
+      </entry>`;
 		});
-		const data_xml = '<feed xmlns="http://www.w3.org/2005/Atom"\n      xmlns:batch="http://schemas.google.com/gdata/batch"\n      xmlns:gs="http://schemas.google.com/spreadsheets/2006">\n      <id>' + this['_links']['cells'] + '</id>\n      ' + entries.join('\n') + '\n    </feed>';
+		const data_xml = `<feed xmlns="http://www.w3.org/2005/Atom"
+      xmlns:batch="http://schemas.google.com/gdata/batch"
+      xmlns:gs="http://schemas.google.com/spreadsheets/2006">
+      <id>${this['_links']['cells']}</id>
+      ${entries.join('\n')}
+    </feed>`;
 		
 		this.spreadsheet.makeFeedRequest(this['_links']['bulkcells'], 'POST', data_xml, function(err, data) {
 			if (err) return cb(err);
