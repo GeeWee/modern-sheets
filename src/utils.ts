@@ -4,7 +4,7 @@ export function forceArray<T>(val: T | T[]) : T[] {
 	return [ val ];
 }
 
-export function xmlSafeValue(val: (cb: any) => |number|string) : string{
+export function xmlSafeValue(val : number|string) : string{
 	if ( val == null ) return '';
 	return String(val).replace(/&/g, '&amp;')
 		.replace(/</g, '&lt;')

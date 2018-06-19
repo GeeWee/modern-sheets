@@ -7,6 +7,7 @@ export class SpreadsheetCell {
 	private readonly id: string; // ????
 	private readonly row: number;
 	private readonly col: number;
+	private readonly _links: Links;
 	private batchId: string;
 	private _formula: string;
 	private _numericValue: number;
@@ -14,7 +15,6 @@ export class SpreadsheetCell {
 	private spreadsheet: GoogleSpreadsheet;
 	private worksheet_id: string;
 	private _needsSave: boolean;
-	private _links: Links;
 	
 	constructor(spreadsheet: GoogleSpreadsheet, worksheet_id: string, data: SpreadsheetCellData){
 		let links;
