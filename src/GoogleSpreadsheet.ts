@@ -176,7 +176,7 @@ export class GoogleSpreadsheet {
 					
 					
 					if (body) {
-						this.xml_parser.parseString(body, function (err, result) {
+						this.xml_parser.parseString(body,  (err, result) => {
 							if (err) return cb(err);
 							cb(null, result, body);
 						});
@@ -253,7 +253,7 @@ export class GoogleSpreadsheet {
 			const sheet = new SpreadsheetWorksheet(this, data);
 			this.worksheets = this.worksheets || [];
 			this.worksheets.push(sheet);
-			sheet.setHeaderRow(opts.headers, function (err) {
+			sheet.setHeaderRow(opts.headers,  (err) => {
 				cb(err, sheet);
 			})
 		});
@@ -301,17 +301,17 @@ export class GoogleSpreadsheet {
 			// need to add the properties from the feed to the xml for the entries
 			const feed_props = _.clone(data.$);
 			delete feed_props['gd:etag'];
-			const feed_props_str = _.reduce(feed_props, function (str, val, key) {
+			const feed_props_str = _.reduce(feed_props,  (str, val, key) => {
 				return str + key + '=\'' + val + '\' ';
 			}, '');
-			entries_xml = _.map(entries_xml, function (xml) {
+			entries_xml = _.map(entries_xml,  (xml) => {
 				return xml.replace('<entry ', '<entry ' + feed_props_str);
 			});
 			
 			const rows = [];
 			const entries = forceArray(data.entry);
 			let i = 0;
-			entries.forEach(function (row_data) {
+			entries.forEach( (row_data) => {
 				rows.push(new SpreadsheetRow(this, row_data, entries_xml[i++]));
 			});
 			cb(null, rows);
@@ -320,7 +320,7 @@ export class GoogleSpreadsheet {
 	
 	addRow = (worksheet_id, data, cb) => {
 		let data_xml = '<entry xmlns="http://www.w3.org/2005/Atom" xmlns:gsx="http://schemas.google.com/spreadsheets/2006/extended">' + '\n';
-		Object.keys(data).forEach(function (key) {
+		Object.keys(data).forEach( (key) => {
 			if (key != 'id' && key != 'title' && key != 'content' && key != '_links') {
 				data_xml += '<gsx:' + xmlSafeColumnName(key) + '>' + xmlSafeValue(data[key]) + '</gsx:' + xmlSafeColumnName(key) + '>' + '\n'
 			}
@@ -355,7 +355,7 @@ export class GoogleSpreadsheet {
 			const cells = [];
 			const entries = forceArray(data['entry']);
 			const i = 0;
-			entries.forEach(function (cell_data) {
+			entries.forEach((cell_data) => {
 				cells.push(new SpreadsheetCell(this, worksheet_id, cell_data));
 			});
 			
