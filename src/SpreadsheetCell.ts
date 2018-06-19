@@ -1,19 +1,22 @@
 import { forceArray, xmlSafeValue } from './utils';
+import { GoogleSpreadsheet } from './GoogleSpreadsheet';
+import { Callback, Links, SpreadsheetCellData } from './types';
 
 
 export class SpreadsheetCell {
-	private id: any;
-	private row: number;
-	private col: number;
+	private readonly id: string; // ????
+	private readonly row: number;
+	private readonly col: number;
 	private batchId: string;
-	private _formula: any;
+	private _formula: string;
 	private _numericValue: number;
 	private _value: string;
-	private spreadsheet: any;
-	private worksheet_id: any;
+	private spreadsheet: GoogleSpreadsheet;
+	private worksheet_id: string;
 	private _needsSave: boolean;
+	private _links: Links;
 	
-	constructor(spreadsheet, worksheet_id, data){
+	constructor(spreadsheet: GoogleSpreadsheet, worksheet_id: string, data: SpreadsheetCellData){
 		let links;
 		this.spreadsheet = spreadsheet;
 		this.worksheet_id = worksheet_id;
@@ -23,10 +26,10 @@ export class SpreadsheetCell {
 		this.col = parseInt(data['gs:cell']['$']['col']);
 		this.batchId = 'R'+this.row+'C'+this.col;
 		
-		this['_links'] = [];
+		this._links = [];
 		links = forceArray( data.link );
 		links.forEach(( link ) => {
-			this['_links'][ link['$']['rel'] ] = link['$']['href'];
+			this._links[ link['$']['rel'] ] = link['$']['href'];
 		});
 		
 		this.updateValuesFromResponseData(data);
@@ -54,7 +57,7 @@ export class SpreadsheetCell {
 		this._value = _data['gs:cell']['_'] || '';
 	};
 	
-	setValue = (new_value, cb) => {
+	setValue = (new_value: string|null, cb: Callback) => {
 		this.value = new_value;
 		this.save(cb);
 	};
@@ -65,8 +68,7 @@ export class SpreadsheetCell {
 		this._value = '';
 	};
 	
-	save = (cb) => {
-		if ( !cb ) cb = function(){};
+	save = (cb: Callback = () => {}) => {
 		this._needsSave = false;
 		
 		const edit_id = 'https://spreadsheets.google.com/feeds/cells/key/worksheetId/private/full/R' + this.row + 'C' + this.col;
@@ -77,14 +79,14 @@ export class SpreadsheetCell {
 		
 		data_xml = data_xml.replace('<entry>', "<entry xmlns='http://www.w3.org/2005/Atom' xmlns:gs='http://schemas.google.com/spreadsheets/2006'>");
 		
-		this.spreadsheet.makeFeedRequest( this['_links']['edit'], 'PUT', data_xml, (err, response) => {
+		this.spreadsheet.makeFeedRequest( this['_links']['edit'], 'PUT', data_xml, (err: null, response: { "$": { "gd:etag": string, xmlns: string, "xmlns:batch": string, "xmlns:gd": string, "xmlns:gs": string }, "app:edited": { "$": { "xmlns:app": string }, _: string }, category: { "$": { scheme: string, term: string } }, content: string, "gs:cell": { "$": { col: string, inputValue: string, numericValue: string, row: string }, _: string }, id: string, link: { "$": { href: string, rel: string, type: string } }[], title: string, updated: string }|{ "$": { "gd:etag": string, xmlns: string, "xmlns:batch": string, "xmlns:gd": string, "xmlns:gs": string }, "app:edited": { "$": { "xmlns:app": string }, _: string }, category: { "$": { scheme: string, term: string } }, content: string, "gs:cell": { "$": { col: string, inputValue: string, row: string } }, id: string, link: { "$": { href: string, rel: string, type: string } }[], title: string, updated: string }|{ "$": { "gd:etag": string, xmlns: string, "xmlns:batch": string, "xmlns:gd": string, "xmlns:gs": string }, "app:edited": { "$": { "xmlns:app": string }, _: string }, category: { "$": { scheme: string, term: string } }, content: string, "gs:cell": { "$": { col: string, inputValue: string, row: string }, _: string }, id: string, link: { "$": { href: string, rel: string, type: string } }[], title: string, updated: string }) => {
 			if (err) return cb(err);
 			this.updateValuesFromResponseData(response);
 			cb();
 		});
 	};
 	
-	del = (cb) => {
+	del = (cb : Callback) => {
 		this.setValue('', cb);
 	};
 	
