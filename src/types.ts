@@ -3,6 +3,7 @@
  */
 export type SpreadsheetCellData = any;
 export type Links = any;
+export type SpreadsheetRowData = any;
 
 export type Callback<T = any> = (err? : any, res? : T) => void
 

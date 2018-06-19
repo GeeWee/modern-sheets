@@ -1,15 +1,17 @@
 import { forceArray, xmlSafeColumnName, xmlSafeValue } from './utils';
 import * as _ from 'lodash';
+import { GoogleSpreadsheet } from './GoogleSpreadsheet';
+import { Callback, SpreadsheetRowData } from './types';
 
 /**
  * TODO: Describe file contents
  */
 
 export class SpreadsheetRow {
-	private spreadsheet: any;
-	private _xml: any;
+	private spreadsheet: GoogleSpreadsheet;
+	private _xml: string;
 	
-	constructor(spreadsheet,data,xml){
+	constructor(spreadsheet, data: SpreadsheetRowData, xml: string){
 		this.spreadsheet = spreadsheet;
 		this._xml = xml;
 		
@@ -39,7 +41,7 @@ export class SpreadsheetRow {
 		});
 	}
 	
-	save = ( cb ) => {
+	save = ( cb : Callback ) => {
 		/*
 		API for edits is very strict with the XML it accepts
 		So we just do a find replace on the original XML.
@@ -57,7 +59,8 @@ export class SpreadsheetRow {
 		});
 		this.spreadsheet.makeFeedRequest( this['_links']['edit'], 'PUT', data_xml, cb );
 	};
-	del = ( cb ) => {
+	
+	del = ( cb : Callback ) => {
 		this.spreadsheet.makeFeedRequest( this['_links']['edit'], 'DELETE', null, cb );
 	}
 }
