@@ -35,7 +35,7 @@ export class SpreadsheetCell {
 		this.updateValuesFromResponseData(data);
 	}
 	
-	updateValuesFromResponseData = (_data) => {
+	updateValuesFromResponseData = (_data: SpreadsheetCellData) => {
 		// formula value
 		const input_val = _data['gs:cell']['$']['inputValue'];
 		// inputValue can be undefined so substr throws an error

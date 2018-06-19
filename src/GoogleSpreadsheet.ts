@@ -10,6 +10,7 @@ import { forceArray, xmlSafeColumnName, xmlSafeValue } from './utils';
 import { SpreadsheetWorksheet } from './SpreadsheetWorksheet';
 import { SpreadsheetRow } from './SpreadsheetRow';
 import { SpreadsheetCell } from './SpreadsheetCell';
+import { Callback } from './types';
 
 const GOOGLE_FEED_URL = 'https://spreadsheets.google.com/feeds/';
 const GOOGLE_AUTH_SCOPE = ['https://spreadsheets.google.com/feeds'];
@@ -108,7 +109,7 @@ export class GoogleSpreadsheet {
 	};
 	
 	// This method is used internally to make all requests
-	makeFeedRequest = (url_params, method, query_or_data, cb) => {
+	makeFeedRequest = (url_params, method, query_or_data, cb: Callback) => {
 		let url;
 		const headers = {};
 		if (!cb) cb = function () {
