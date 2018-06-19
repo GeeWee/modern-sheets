@@ -1,5 +1,7 @@
 import { forceArray } from './utils';
 import * as _ from 'lodash';
+import { GoogleSpreadsheet } from './GoogleSpreadsheet';
+import { Links } from './types';
 
 /**
  * TODO: Describe file contents
@@ -7,29 +9,30 @@ import * as _ from 'lodash';
 
 
 export class SpreadsheetWorksheet{
-	private spreadsheet: any;
-	private url: any;
+	private spreadsheet: GoogleSpreadsheet;
+	private url: string;
 	private id: string;
-	private title: any;
+	private title: string;
 	private rowCount: number;
 	private colCount: number;
+	private _links: Links;
 	
 	constructor(spreadsheet, data){
 		let links;
 		this.spreadsheet = spreadsheet;
 		this.url = data.id;
-		this.id = data.id.substring( data.id.lastIndexOf("/") + 1 );
+		this.id = data.id.substring( data.id.lastIndexOf('/') + 1 );
 		this.title = data.title;
 		this.rowCount = parseInt(data['gs:rowCount']);
 		this.colCount = parseInt(data['gs:colCount']);
 		
-		this['_links'] = [];
+		this._links = [];
 		links = forceArray( data.link );
 		links.forEach( ( link ) => {
-			this['_links'][ link['$']['rel'] ] = link['$']['href'];
+			this._links[ link['$']['rel'] ] = link['$']['href'];
 		});
-		this['_links']['cells'] = this['_links']['http://schemas.google.com/spreadsheets/2006#cellsfeed'];
-		this['_links']['bulkcells'] = this['_links']['cells']+'/batch';
+		this._links['cells'] = this._links['http://schemas.google.com/spreadsheets/2006#cellsfeed'];
+		this._links['bulkcells'] = this._links['cells']+'/batch';
 		
 	}
 	
