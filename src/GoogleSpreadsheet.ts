@@ -109,7 +109,7 @@ export class GoogleSpreadsheet {
 	};
 	
 	// This method is used internally to make all requests
-	makeFeedRequest = (url_params, method, query_or_data, cb: Callback) => {
+	makeFeedRequest = (url_params, method, query_or_data, cb: any) => {
 		let url;
 		const headers = {};
 		if (!cb) cb = function () {
