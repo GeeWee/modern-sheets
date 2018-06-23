@@ -7,6 +7,9 @@ import sheet_ids from './config';
 import _ from 'lodash';
 import async from 'async';
 
+import { should, assert } from 'chai';
+should();
+
 const docs = {};
 Object.keys(sheet_ids).forEach(key => {
   docs[key] = new GoogleSpreadsheet(sheet_ids[key]);
@@ -102,9 +105,10 @@ describe('Cell-based feeds', function() {
         'return-empty': true,
         'max-row': 1,
         'max-col': NUM_COLS+1
-      }, (err, cells) => {
-        err.should.have.string('error');
-        err.toString().indexOf('max-col').should.not.equal(-1);
+      }, (err: Error, cells) => {
+        err.should.be.an('Error');
+        //TODO FIX THIS LAST ERROR HERE
+          err.message.should.include('max-col');
         done();
       });
     });
@@ -132,7 +136,7 @@ describe('Cell-based feeds', function() {
 
     it('can update a single cell by calling `setValue`', done => {
       cell.setValue('HELLO', err => {
-        (!err).should.be.true;
+        assert.notExists(err);
         cell.value.should.equal('HELLO');
         sheet.getCells({}, (err, cells) => {
           cells[0].value.should.equal('HELLO');
@@ -144,7 +148,7 @@ describe('Cell-based feeds', function() {
     it('can update a single cell by `save`', done => {
       cell.value = 'GOODBYE';
       cell.save(err => {
-        (!err).should.be.true;
+        assert.notExists(err);
         cell.value.should.equal('GOODBYE');
         sheet.getCells({}, (err, cells) => {
           cells[0].value.should.equal('GOODBYE');
@@ -160,7 +164,7 @@ describe('Cell-based feeds', function() {
       (cell.formula === undefined).should.be.true;
 
       cell.save(err => {
-        (!err).should.be.true;
+        assert.notExists(err);
         cell.value.should.equal('123');
         cell.numericValue.should.equal(123);
         (cell.formula === undefined).should.be.true;
@@ -175,7 +179,7 @@ describe('Cell-based feeds', function() {
       (cell.formula === undefined).should.be.true;
 
       cell.save(err => {
-        (!err).should.be.true;
+        assert.notExists(err);
         cell.value.should.equal('456');
         cell.numericValue.should.equal(456);
         (cell.formula === undefined).should.be.true;
@@ -198,7 +202,7 @@ describe('Cell-based feeds', function() {
       (cell.formula === undefined).should.be.true;
 
       cell.save(err => {
-        (!err).should.be.true;
+        assert.notExists(err);
         cell.value.should.equal('ABC');
         (cell.numericValue === undefined).should.be.true;
         (cell.formula === undefined).should.be.true;
@@ -220,7 +224,7 @@ describe('Cell-based feeds', function() {
       cell.value.should.equal('*SAVE TO GET NEW VALUE*');
       cell.formula.should.equal('=ROW()');
       cell.save(err => {
-        (!err).should.be.true;
+        assert.notExists(err);
         cell.value.should.equal('1');
         cell.numericValue.should.equal(1);
         cell.formula.should.equal('=ROW()');
@@ -240,7 +244,7 @@ describe('Cell-based feeds', function() {
     it('supports formulas that resolve to non-numeric values', done => {
       cell.formula = '=IF(TRUE, "ABC", "DEF")';
       cell.save(err => {
-        (!err).should.be.true;
+        assert.notExists(err);
         cell.value.should.equal('ABC');
         (cell.numericValue === undefined).should.be.true;
         cell.formula.should.equal('=IF(TRUE, "ABC", "DEF")');
@@ -254,7 +258,7 @@ describe('Cell-based feeds', function() {
       cell.formula.should.equal('=COLUMN()');
       (cell.numericValue === undefined).should.be.true;
       cell.save(err => {
-        (!err).should.be.true;
+        assert.notExists(err);
         cell.value.should.equal('1');
         cell.numericValue.should.equal(1);
         cell.formula.should.equal('=COLUMN()');
@@ -270,7 +274,7 @@ describe('Cell-based feeds', function() {
       (cell.formula === undefined).should.be.true;
 
       cell.save(err => {
-        (!err).should.be.true;
+        assert.notExists(err);
         cell.value.should.equal('');
         (cell.numericValue === undefined).should.be.true;
         (cell.formula === undefined).should.be.true;
@@ -280,7 +284,7 @@ describe('Cell-based feeds', function() {
 
     it('can update a single cell with linefeed in value', done => {
       cell.setValue('HELLO\nWORLD', err => {
-        (!err).should.be.true;
+        assert.notExists(err);
         cell.value.should.equal('HELLO\nWORLD');
         sheet.getCells({}, (err, cells) => {
           cells[0].value.should.equal('HELLO\nWORLD');
@@ -304,7 +308,7 @@ describe('Cell-based feeds', function() {
 
     it('succeeds if no cells need an update', done => {
       sheet.bulkUpdateCells(cells, err => {
-        (!err).should.be.true;
+        assert.notExists(err);
         done();
       })
     });
@@ -314,7 +318,7 @@ describe('Cell-based feeds', function() {
       cells[1].value = '2';
       cells[2].formula = '=A1+B1';
       sheet.bulkUpdateCells(cells, err => {
-        (!err).should.be.true;
+        assert.notExists(err);
         cells[0].numericValue.should.equal(1);
         cells[1].numericValue.should.equal(2);
         cells[2].numericValue.should.equal(3);

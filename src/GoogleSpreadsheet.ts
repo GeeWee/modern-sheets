@@ -10,7 +10,9 @@ import { forceArray, xmlSafeColumnName, xmlSafeValue } from './utils';
 import { SpreadsheetWorksheet } from './SpreadsheetWorksheet';
 import { SpreadsheetRow } from './SpreadsheetRow';
 import { SpreadsheetCell } from './SpreadsheetCell';
-import { Callback } from './types';
+import { Authentication, Callback } from './types';
+import * as util from 'util';
+import axios, { AxiosResponse } from 'axios';
 
 const GOOGLE_FEED_URL = 'https://spreadsheets.google.com/feeds/';
 const GOOGLE_AUTH_SCOPE = ['https://spreadsheets.google.com/feeds'];
@@ -31,14 +33,14 @@ export class GoogleSpreadsheet {
 	auth_mode = 'anonymous';
 	private options: any;
 	private jwt_client: JWT;
-	private google_auth: any;
+	private google_auth: any; //todo remove? -- type should be googleauth??
 	private auth_client: GoogleAuth;
-	private ss_key: any;
+	private ss_key: string;
 	private worksheets: any[];
 	private info: { id: any; title: any; updated: any; author: any; worksheets: any[] };
 	
 	//TODO optional?
-	constructor(ss_key, auth_id?, options?){
+	constructor(ss_key: string, auth_id?: Authentication, options?: any) {
 		if (!ss_key) {
 			throw new Error('Spreadsheet key not provided.');
 		}
@@ -49,13 +51,9 @@ export class GoogleSpreadsheet {
 		this.options = options || {};
 		
 		this.setAuthAndDependencies(auth_id);
-		
-		
-		
-		
 	}
 	
-	setAuthToken =  (auth_id) =>  {
+	setAuthToken = (auth_id: Authentication) => {
 		if (this.auth_mode == 'anonymous') {
 			this.auth_mode = 'token';
 		}
@@ -64,11 +62,11 @@ export class GoogleSpreadsheet {
 	
 	// deprecated username/password login method
 	// leaving it here to help notify users why it doesn't work
-	setAuth = (username, password, cb) => {
+	setAuth = (username: string, password: string, cb: Callback) => {
 		return cb(new Error('Google has officially deprecated ClientLogin. Please upgrade this module and see the readme for more instrucations'))
 	};
 	
-	useServiceAccountAuth =  (creds, cb) => {
+	useServiceAccountAuth = (creds: string | any, cb: Callback) => {
 		if (typeof creds == 'string') {
 			try {
 				creds = require(creds);
@@ -77,19 +75,18 @@ export class GoogleSpreadsheet {
 			}
 		}
 		this.jwt_client = new gal.JWT(creds.client_email, null, creds.private_key, GOOGLE_AUTH_SCOPE, null);
-		this.renewJwtAuth(cb);
+		this.renewJwtAuth()
+			.then(() => cb(null))
+			.catch(err => cb(err));
 	};
 	
-	renewJwtAuth = (cb) => {
+	renewJwtAuth = async (): Promise<void> => {
 		this.auth_mode = 'jwt';
-		this.jwt_client.authorize((err, token) => {
-			if (err) return cb(err);
-			this.setAuthToken({
-				type: token.token_type,
-				value: token.access_token,
-				expires: token.expiry_date
-			});
-			cb()
+		const token = await this.jwt_client.authorize();
+		this.setAuthToken({
+			type: token.token_type,
+			value: token.access_token,
+			expires: token.expiry_date
 		});
 	};
 	
@@ -98,7 +95,7 @@ export class GoogleSpreadsheet {
 	};
 	
 	//TOdo maybe not right
-	setAuthAndDependencies = (auth) => {
+	setAuthAndDependencies = (auth: GoogleAuth) => {
 		this.google_auth = auth;
 		if (!this.options.visibility) {
 			this.visibility = auth ? 'private' : 'public';
@@ -108,8 +105,19 @@ export class GoogleSpreadsheet {
 		}
 	};
 	
+	private ensureAuthIsUpToDate = async () => {
+		if (this.auth_mode != 'jwt') {
+			return;
+		}
+		// check if jwt token is expired
+		if (this.google_auth && this.google_auth.expires > +new Date()) {
+			return;
+		}
+		return this.renewJwtAuth();
+	};
+	
 	// This method is used internally to make all requests
-	makeFeedRequest = (url_params, method, query_or_data, cb: any) => {
+	makeFeedRequest = (url_params: any, method: any, query_or_data: any, cb: any) => {
 		let url;
 		const headers = {};
 		if (!cb) cb = function () {
@@ -123,74 +131,89 @@ export class GoogleSpreadsheet {
 			url = GOOGLE_FEED_URL + url_params.join('/');
 		}
 		
+		//auth step
+		
 		async.series({
 			auth: (step) => {
-				if (this.auth_mode != 'jwt') return step();
-				// check if jwt token is expired
-				if (this.google_auth && this.google_auth.expires > +new Date()) return step();
-				this.renewJwtAuth(step);
+				return this.ensureAuthIsUpToDate()
+					.then(() => step(null))
+					.catch(err => step(err));
 			},
 			request: (result, step) => {
-				if (this.google_auth) {
-					if (this.google_auth.type === 'Bearer') {
-						headers['Authorization'] = 'Bearer ' + this.google_auth.value;
-					} else {
-						headers['Authorization'] = 'GoogleLogin auth=' + this.google_auth;
-					}
-				}
-				
-				headers['Gdata-Version'] = '3.0';
-				
-				if (method == 'POST' || method == 'PUT') {
-					headers['content-type'] = 'application/atom+xml';
-				}
-				
-				if (method == 'PUT' || method == 'POST' && url.indexOf('/batch') != -1) {
-					headers['If-Match'] = '*';
-				}
-				
-				if (method == 'GET' && query_or_data) {
-					let query = '?' + querystring.stringify(query_or_data);
-					// replacements are needed for using structured queries on getRows
-					query = query.replace(/%3E/g, '>');
-					query = query.replace(/%3D/g, '=');
-					query = query.replace(/%3C/g, '<');
-					url += query;
-				}
-				
-				request({
-					url: url,
-					method: method,
-					headers: headers,
-					body: method == 'POST' || method == 'PUT' ? query_or_data : null
-				}, (err, response, body) => {
-					if (err) {
-						return cb(err);
-					} else if (response.statusCode === 401) {
-						return cb(new Error('Invalid authorization key.'));
-					} else if (response.statusCode >= 400) {
-						const message = _.isObject(body) ? JSON.stringify(body) : body.replace(/&quot;/g, '"');
-						return cb(new Error('HTTP error ' + response.statusCode + ' (' + http.STATUS_CODES[response.statusCode]) + ') - ' + message);
-					} else if (response.statusCode === 200 && response.headers['content-type'].indexOf('text/html') >= 0) {
-						return cb(new Error('Sheet is private. Use authentication or make public. (see https://github.com/theoephraim/node-google-spreadsheet#a-note-on-authentication for details)'));
-					}
-					
-					
-					if (body) {
-						this.xml_parser.parseString(body,  (err, result) => {
-							if (err) return cb(err);
-							cb(null, result, body);
-						});
-					} else {
-						if (err) cb(err);
-						else cb(null, true);
-					}
-				})
+				this.makeRequest(headers, method, url, query_or_data)
+					.then((res) => {
+						return cb(null, res.data, res.xml);
+					})
+					.catch(err => cb(err));
 			}
 		});
 	};
+	
+	private makeRequest = async (headers, method: any, url, query_or_data: any): Promise<{data: any, xml:any}> => {
+		if (this.google_auth) {
+			if (this.google_auth.type === 'Bearer') {
+				headers['Authorization'] = 'Bearer ' + this.google_auth.value;
+			} else {
+				headers['Authorization'] = 'GoogleLogin auth=' + this.google_auth;
+			}
+		}
+		
+		headers['Gdata-Version'] = '3.0';
+		
+		if (method == 'POST' || method == 'PUT') {
+			headers['content-type'] = 'application/atom+xml';
+		}
+		
+		if (method == 'PUT' || method == 'POST' && url.indexOf('/batch') != -1) {
+			headers['If-Match'] = '*';
+		}
+		
+		if (method == 'GET' && query_or_data) {
+			let query = '?' + querystring.stringify(query_or_data);
+			// replacements are needed for using structured queries on getRows
+			query = query.replace(/%3E/g, '>');
+			query = query.replace(/%3D/g, '=');
+			query = query.replace(/%3C/g, '<');
+			url += query;
+		}
+		
+		let response : AxiosResponse;
+		try {
+			response = await axios.request({
+				url: url,
+				method: method,
+				headers: headers,
+				data: method == 'POST' || method == 'PUT' ? query_or_data : null,
+				//The response is xml - we'll just grab it as text to avoid json parse errors
+				responseType: 'text'
+			});
+		} catch (err) {
+			if (err.response.status === 401) {
+				throw new Error('Invalid authorization key.')
+			}
+			// Decorate error with some extra information
+			err.message = `${err.message}. Response from server: "${err.response.data}"`;
+			throw err;
+		}
+		// If it responds with an html page - it means the sheet is private
+		if (response.status === 200 && response.headers['content-type'].indexOf('text/html') >= 0) {
+			throw new Error('Sheet is private. Use authentication or make public. (see https://github.com/theoephraim/node-google-spreadsheet#a-note-on-authentication for details)');
+		}
+		
+		if (response.data) {
+			const promisifedParse = util.promisify(this.xml_parser.parseString) as any;
+			const parseResult = await promisifedParse(response.data);
+			return {data: parseResult, xml: response.data};
+			
+			// Wtf two returns?????
+			//cb(null, result, body);
+		}
+		// No errors and no response. Return empty object here.
+		//todo remove?
+		return {data: null, xml: null}
+	};
 
-	// public API methods
+// public API methods
 	getInfo = (cb) => {
 		this.makeFeedRequest(['worksheets', this.ss_key], 'GET', null, (err, data, xml) => {
 			if (err) return cb(err);
@@ -216,7 +239,7 @@ export class GoogleSpreadsheet {
 	
 	// NOTE: worksheet IDs start at 1
 	
-	addWorksheet = (opts, cb)  => {
+	addWorksheet = (opts, cb) => {
 		// make opts optional
 		if (typeof opts == 'function') {
 			cb = opts;
@@ -254,7 +277,7 @@ export class GoogleSpreadsheet {
 			const sheet = new SpreadsheetWorksheet(this, data);
 			this.worksheets = this.worksheets || [];
 			this.worksheets.push(sheet);
-			sheet.setHeaderRow(opts.headers,  (err) => {
+			sheet.setHeaderRow(opts.headers, (err) => {
 				cb(err, sheet);
 			})
 		});
@@ -302,17 +325,17 @@ export class GoogleSpreadsheet {
 			// need to add the properties from the feed to the xml for the entries
 			const feed_props = _.clone(data.$);
 			delete feed_props['gd:etag'];
-			const feed_props_str = _.reduce(feed_props,  (str, val, key) => {
+			const feed_props_str = _.reduce(feed_props, (str, val, key) => {
 				return str + key + '=\'' + val + '\' ';
 			}, '');
-			entries_xml = _.map(entries_xml,  (xml) => {
+			entries_xml = _.map(entries_xml, (xml) => {
 				return xml.replace('<entry ', '<entry ' + feed_props_str);
 			});
 			
 			const rows = [];
 			const entries = forceArray(data.entry);
 			let i = 0;
-			entries.forEach( (row_data) => {
+			entries.forEach((row_data) => {
 				rows.push(new SpreadsheetRow(this, row_data, entries_xml[i++]));
 			});
 			cb(null, rows);
@@ -321,7 +344,7 @@ export class GoogleSpreadsheet {
 	
 	addRow = (worksheet_id, data, cb) => {
 		let data_xml = '<entry xmlns="http://www.w3.org/2005/Atom" xmlns:gsx="http://schemas.google.com/spreadsheets/2006/extended">' + '\n';
-		Object.keys(data).forEach( (key) => {
+		Object.keys(data).forEach((key) => {
 			if (key != 'id' && key != 'title' && key != 'content' && key != '_links') {
 				data_xml += '<gsx:' + xmlSafeColumnName(key) + '>' + xmlSafeValue(data[key]) + '</gsx:' + xmlSafeColumnName(key) + '>' + '\n'
 			}
