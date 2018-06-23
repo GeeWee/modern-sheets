@@ -7,7 +7,7 @@ import sheet_ids from './config';
 import _ from 'lodash';
 import async from 'async';
 
-import { should, assert } from 'chai';
+import { should, assert, expect } from 'chai';
 
 should();
 
@@ -81,18 +81,12 @@ describe('Cell-based feeds', function () {
 		});
 		
 		it('handles requests outisde the bounds of the sheet', async () => {
-			try {
-				await sheet.getCells({
-					'return-empty': true,
-					'max-row': 1,
-					'max-col': NUM_COLS + 1
-				});
-			} catch (err) {
-				err.should.be.an('Error');
-				//TODO FIX THIS LAST ERROR HERE
-				err.message.should.include('max-col');
-			}
-			
+			return expect(sheet.getCells({
+				'return-empty': true,
+				'max-row': 1,
+				'max-col': NUM_COLS + 1
+			}))
+				.to.be.rejectedWith('max-col');
 		});
 	});
 	
@@ -154,6 +148,7 @@ describe('Cell-based feeds', function () {
 		
 		it('throws an error if an invalid `numericValue` is set', () => {
 			let err;
+			
 			try {
 				cell.numericValue = 'abc';
 			} catch (_err) {

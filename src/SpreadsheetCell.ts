@@ -57,9 +57,9 @@ export class SpreadsheetCell {
 		this._value = _data['gs:cell']['_'] || '';
 	};
 	
-	setValue = (new_value: string|null, cb: Callback) => {
+	setValue = async (new_value: string|null, cb: Callback = () => {}) => {
 		this.value = new_value;
-		this.save(cb);
+		return this.save(); //todo no callback
 	};
 	
 	_clearValue = () => {
@@ -68,9 +68,11 @@ export class SpreadsheetCell {
 		this._value = '';
 	};
 	
-	save = (cb: Callback = () => {}) => {
+	//todo no callback
+	save = async () => {
 		this._needsSave = false;
 		
+		//TODO remove?
 		const edit_id = 'https://spreadsheets.google.com/feeds/cells/key/worksheetId/private/full/R' + this.row + 'C' + this.col;
 		let data_xml =
 			'<entry><id>' + this.id + '</id>' +
@@ -79,15 +81,12 @@ export class SpreadsheetCell {
 		
 		data_xml = data_xml.replace('<entry>', "<entry xmlns='http://www.w3.org/2005/Atom' xmlns:gs='http://schemas.google.com/spreadsheets/2006'>");
 		
-		this.spreadsheet.makeFeedRequest( this['_links']['edit'], 'PUT', data_xml, (err: null, response: { "$": { "gd:etag": string, xmlns: string, "xmlns:batch": string, "xmlns:gd": string, "xmlns:gs": string }, "app:edited": { "$": { "xmlns:app": string }, _: string }, category: { "$": { scheme: string, term: string } }, content: string, "gs:cell": { "$": { col: string, inputValue: string, numericValue: string, row: string }, _: string }, id: string, link: { "$": { href: string, rel: string, type: string } }[], title: string, updated: string }|{ "$": { "gd:etag": string, xmlns: string, "xmlns:batch": string, "xmlns:gd": string, "xmlns:gs": string }, "app:edited": { "$": { "xmlns:app": string }, _: string }, category: { "$": { scheme: string, term: string } }, content: string, "gs:cell": { "$": { col: string, inputValue: string, row: string } }, id: string, link: { "$": { href: string, rel: string, type: string } }[], title: string, updated: string }|{ "$": { "gd:etag": string, xmlns: string, "xmlns:batch": string, "xmlns:gd": string, "xmlns:gs": string }, "app:edited": { "$": { "xmlns:app": string }, _: string }, category: { "$": { scheme: string, term: string } }, content: string, "gs:cell": { "$": { col: string, inputValue: string, row: string }, _: string }, id: string, link: { "$": { href: string, rel: string, type: string } }[], title: string, updated: string }) => {
-			if (err) return cb(err);
-			this.updateValuesFromResponseData(response);
-			cb();
-		});
+		const response = await this.spreadsheet.makeFeedRequest( this['_links']['edit'], 'PUT', data_xml);
+		this.updateValuesFromResponseData(response.data);
 	};
 	
-	del = (cb : Callback) => {
-		this.setValue('', cb);
+	del = async (cb : Callback) => {
+		return this.setValue('', cb);
 	};
 	
 	// GETTERS AND SETTERS

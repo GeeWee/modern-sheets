@@ -2,6 +2,7 @@ import { forceArray } from './utils';
 import * as _ from 'lodash';
 import { GoogleSpreadsheet } from './GoogleSpreadsheet';
 import { Callback, Links, WorksheetData } from './types';
+import { SpreadsheetRow } from './SpreadsheetRow';
 
 /**
  * TODO: Describe file contents
@@ -41,51 +42,44 @@ export class SpreadsheetWorksheet{
 		
 	}
 	
-	_setInfo = (opts? : Partial<WorksheetInfo>, cb: Callback = _.noop) => {
-		cb = cb || _.noop;
+	_setInfo = async (opts? : Partial<WorksheetInfo>) => {
 		const xml = `<entry xmlns="http://www.w3.org/2005/Atom" xmlns:gs="http://schemas.google.com/spreadsheets/2006"><title>${opts.title || this.title}</title><gs:rowCount>${opts.rowCount || this.rowCount}</gs:rowCount><gs:colCount>${opts.colCount || this.colCount}</gs:colCount></entry>`;
-		this.spreadsheet.makeFeedRequest(this['_links']['edit'], 'PUT', xml, (err, response) => {
-			if (err) return cb(err);
+		const {data : response} = await this.spreadsheet.makeFeedRequest(this['_links']['edit'], 'PUT', xml);
 			this.title = response.title;
 			this.rowCount = parseInt(response['gs:rowCount']);
 			this.colCount = parseInt(response['gs:colCount']);
-			cb();
-		});
 	};
 	
 	resize = this._setInfo;
-	setTitle = (title: string, cb: Callback) => {
-		this._setInfo({title: title}, cb);
+	setTitle = async (title: string) => {
+		return this._setInfo({title: title});
 	};
 	
 	
 	// just a convenience method to clear the whole sheet
 	// resizes to 1 cell, clears the cell, and puts it back
-	clear = (cb : Callback) => {
+	clear = async () => {
 		const cols = this.colCount;
 		const rows = this.colCount;
-		this.resize({rowCount: 1, colCount: 1}, (err)  => {
-			if (err) return cb(err);
-			this.getCells((err: any, cells: any) => {
-				cells[0].setValue(null, (err: any) => {
-					if (err) return cb(err);
-					this.resize({rowCount: rows, colCount: cols}, cb);
-				});
-			})
-		});
+		await this.resize({rowCount: 1, colCount: 1});
+		const cells = await this.getCells();
+		await cells[0].setValue(null);
+		return this.resize({rowCount: rows, colCount: cols});
 	};
 	
-	getRows = (opts : any, cb: Callback) =>{
-		this.spreadsheet.getRows(this.id, opts, cb);
+	getRows = async (opts : any = {}) =>{
+		return this.spreadsheet.getRows(this.id, opts);
 	};
-	//todo maybe no callback
-	getCells = (opts?: any, cb?: Callback) => {
-		this.spreadsheet.getCells(this.id, opts, cb);
+
+	getCells = async (opts: any = {}) => {
+		return this.spreadsheet.getCells(this.id, opts);
 	};
-	addRow = (data: any, cb: Callback) =>{
-		this.spreadsheet.addRow(this.id, data, cb);
+
+	addRow = async (data: any): Promise<SpreadsheetRow> =>{
+		return this.spreadsheet.addRow(this.id, data);
 	};
-	bulkUpdateCells = (cells: any[], cb: Callback = _.noop) => {
+	
+	bulkUpdateCells = async (cells?: any[]) => {
 		const entries = cells.map((cell, i) => {
 			cell._needsSave = false;
 			return `<entry>
@@ -104,38 +98,37 @@ export class SpreadsheetWorksheet{
       ${entries.join('\n')}
     </feed>`;
 		
-		this.spreadsheet.makeFeedRequest(this['_links']['bulkcells'], 'POST', data_xml, function(err, data) {
-			if (err) return cb(err);
-			
+		const {data} = await this.spreadsheet.makeFeedRequest(this['_links']['bulkcells'], 'POST', data_xml);
 			// update all the cells
 			const cells_by_batch_id = _.keyBy(cells, 'batchId');
-			if (data.entry && data.entry.length) data.entry.forEach((cell_data: any) => {
-				cells_by_batch_id[cell_data['batch:id']].updateValuesFromResponseData(cell_data);
-			});
-			cb();
-		});
+			if (data.entry && data.entry.length) {
+				data.entry.forEach((cell_data: any) => {
+					cells_by_batch_id[cell_data['batch:id']].updateValuesFromResponseData(cell_data);
+				});
+			}
 	};
-	del = (cb : Callback) => {
-		this.spreadsheet.makeFeedRequest(this['_links']['edit'], 'DELETE', null, cb);
+
+	del = async () => {
+		return this.spreadsheet.makeFeedRequest(this['_links']['edit'], 'DELETE', null);
 	};
 	
-	setHeaderRow = (values: any, cb: Callback = _.noop) => {
-		if (!values) return cb();
-		if (values.length > this.colCount){
-			return cb(new Error('Sheet is not large enough to fit '+values.length+' columns. Resize the sheet first.'));
+	setHeaderRow = async (values: any) => {
+		if (!values) {
+			return;
 		}
-		this.getCells({
+		if (values.length > this.colCount){
+			throw Error('Sheet is not large enough to fit '+values.length+' columns. Resize the sheet first.');
+		}
+		const cells = await this.getCells({
 			'min-row': 1,
 			'max-row': 1,
 			'min-col': 1,
 			'max-col': this.colCount,
 			'return-empty': true
-		}, (err, cells)  => {
-			if (err) return cb(err);
-			_.each(cells, (cell) => {
+		});
+		_.each(cells, (cell) => {
 				cell.value = values[cell.col-1] ? values[cell.col-1] : '';
 			});
-			this.bulkUpdateCells(cells, cb);
-		});
-	}
+		return this.bulkUpdateCells(cells);
+	};
 }

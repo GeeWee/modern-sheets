@@ -1,8 +1,6 @@
 import async from 'async';
 import request from 'request';
 import xml2js from 'xml2js';
-import http from 'http';
-import querystring from 'querystring';
 import _ from 'lodash';
 import * as gal from 'google-auth-library';
 import { GoogleAuth, JWT } from 'google-auth-library';
@@ -11,8 +9,9 @@ import { SpreadsheetWorksheet } from './SpreadsheetWorksheet';
 import { SpreadsheetRow } from './SpreadsheetRow';
 import { SpreadsheetCell } from './SpreadsheetCell';
 import { Authentication, Callback } from './types';
-import * as util from 'util';
 import axios, { AxiosResponse } from 'axios';
+import * as querystring from 'querystring';
+import * as util from 'util';
 
 const GOOGLE_FEED_URL = 'https://spreadsheets.google.com/feeds/';
 const GOOGLE_AUTH_SCOPE = ['https://spreadsheets.google.com/feeds'];
@@ -62,22 +61,16 @@ export class GoogleSpreadsheet {
 	
 	// deprecated username/password login method
 	// leaving it here to help notify users why it doesn't work
-	setAuth = (username: string, password: string, cb: Callback) => {
-		return cb(new Error('Google has officially deprecated ClientLogin. Please upgrade this module and see the readme for more instrucations'))
+	setAuth = (username: string, password: string) => {
+		throw Error('Google has officially deprecated ClientLogin. Please upgrade this module and see the readme for more instrucations')
 	};
 	
-	useServiceAccountAuth = (creds: string | any, cb: Callback) => {
+	useServiceAccountAuth = async (creds: string | any) => {
 		if (typeof creds == 'string') {
-			try {
 				creds = require(creds);
-			} catch (err) {
-				return cb(err);
-			}
 		}
 		this.jwt_client = new gal.JWT(creds.client_email, null, creds.private_key, GOOGLE_AUTH_SCOPE, null);
-		this.renewJwtAuth()
-			.then(() => cb(null))
-			.catch(err => cb(err));
+		return this.renewJwtAuth();
 	};
 	
 	renewJwtAuth = async (): Promise<void> => {
@@ -117,11 +110,9 @@ export class GoogleSpreadsheet {
 	};
 	
 	// This method is used internally to make all requests
-	makeFeedRequest = (url_params: any, method: any, query_or_data: any, cb: any) => {
+	makeFeedRequest =  async (url_params: any, method: any, query_or_data: any)=> {
 		let url;
 		const headers = {};
-		if (!cb) cb = function () {
-		};
 		if (typeof(url_params) == 'string') {
 			// used for edit / delete requests
 			url = url_params;
@@ -131,22 +122,17 @@ export class GoogleSpreadsheet {
 			url = GOOGLE_FEED_URL + url_params.join('/');
 		}
 		
-		//auth step
-		
-		async.series({
-			auth: (step) => {
-				return this.ensureAuthIsUpToDate()
-					.then(() => step(null))
-					.catch(err => step(err));
-			},
-			request: (result, step) => {
-				this.makeRequest(headers, method, url, query_or_data)
-					.then((res) => {
-						return cb(null, res.data, res.xml);
-					})
-					.catch(err => cb(err));
-			}
-		});
+		await this.ensureAuthIsUpToDate();
+			const result = await this.makeRequest(headers, method, url, query_or_data);
+			return result;/*
+			.then((res) => {
+				if (cb){
+					cb(null, res.data, res.xml)
+				} else {
+					return res;
+				}
+			})
+			.catch(err => cb(err));*/
 	};
 	
 	private makeRequest = async (headers, method: any, url, query_or_data: any): Promise<{data: any, xml:any}> => {
@@ -214,11 +200,10 @@ export class GoogleSpreadsheet {
 	};
 
 // public API methods
-	getInfo = (cb) => {
-		this.makeFeedRequest(['worksheets', this.ss_key], 'GET', null, (err, data, xml) => {
-			if (err) return cb(err);
+	getInfo = async () => {
+		const {data} = await this.makeFeedRequest(['worksheets', this.ss_key], 'GET', null);
 			if (data === true) {
-				return cb(new Error('No response to getInfo call'))
+				throw Error('No response to getInfo call')
 			}
 			const ss_data = {
 				id: data.id,
@@ -233,22 +218,20 @@ export class GoogleSpreadsheet {
 			});
 			this.info = ss_data;
 			this.worksheets = ss_data.worksheets;
-			cb(null, ss_data);
-		});
+			return ss_data;
 	};
 	
 	// NOTE: worksheet IDs start at 1
 	
-	addWorksheet = (opts, cb) => {
+	addWorksheet = async (opts) => {
 		// make opts optional
 		if (typeof opts == 'function') {
-			cb = opts;
 			opts = {};
 		}
 		
-		cb = cb || _.noop;
-		
-		if (!this.isAuthActive()) return cb(new Error(REQUIRE_AUTH_MESSAGE));
+		if (!this.isAuthActive()) {
+			throw Error(REQUIRE_AUTH_MESSAGE);
+		}
 		
 		const defaults = {
 			title: 'Worksheet ' + (+new Date()),  // need a unique title
@@ -271,34 +254,26 @@ export class GoogleSpreadsheet {
 			opts.colCount +
 			'</gs:colCount></entry>';
 		
-		this.makeFeedRequest(['worksheets', this.ss_key], 'POST', data_xml, (err, data, xml) => {
-			if (err) return cb(err);
-			
+		const {data} = await this.makeFeedRequest(['worksheets', this.ss_key], 'POST', data_xml);
 			const sheet = new SpreadsheetWorksheet(this, data);
 			this.worksheets = this.worksheets || [];
 			this.worksheets.push(sheet);
-			sheet.setHeaderRow(opts.headers, (err) => {
-				cb(err, sheet);
-			})
-		});
+			await sheet.setHeaderRow(opts.headers);
+			return sheet;
 	};
 	
-	removeWorksheet = (sheet_id, cb) => {
-		if (!this.isAuthActive()) return cb(new Error(REQUIRE_AUTH_MESSAGE));
-		if (sheet_id instanceof SpreadsheetWorksheet) return sheet_id.del(cb);
-		this.makeFeedRequest(GOOGLE_FEED_URL + 'worksheets/' + this.ss_key + '/private/full/' + sheet_id, 'DELETE', null, cb);
-	};
-	
-	getRows = (worksheet_id, opts, cb) => {
-		// the first row is used as titles/keys and is not included
-		
-		// opts is optional
-		if (typeof(opts) == 'function') {
-			cb = opts;
-			opts = {};
+	removeWorksheet = async (sheet_id) => {
+		if (!this.isAuthActive()) {
+			throw Error(REQUIRE_AUTH_MESSAGE);
 		}
-		
-		
+		if (sheet_id instanceof SpreadsheetWorksheet) {
+			return sheet_id.del();
+		}
+		return this.makeFeedRequest(GOOGLE_FEED_URL + 'worksheets/' + this.ss_key + '/private/full/' + sheet_id, 'DELETE', null);
+	};
+	
+	getRows = async (worksheet_id, opts : any = {}) => {
+		// the first row is used as titles/keys and is not included
 		const query = {};
 		
 		if (opts.offset) query['start-index'] = opts.offset;
@@ -311,10 +286,9 @@ export class GoogleSpreadsheet {
 		if (opts.reverse) query['reverse'] = 'true';
 		if (opts.query) query['sq'] = opts.query;
 		
-		this.makeFeedRequest(['list', this.ss_key, worksheet_id], 'GET', query, (err, data, xml) => {
-			if (err) return cb(err);
+		const {data, xml} = await this.makeFeedRequest(['list', this.ss_key, worksheet_id], 'GET', query);
 			if (data === true) {
-				return cb(new Error('No response to getRows call'))
+				throw Error('No response to getRows call');
 			}
 			
 			// gets the raw xml for each entry -- this is passed to the row object so we can do updates on it later
@@ -338,30 +312,26 @@ export class GoogleSpreadsheet {
 			entries.forEach((row_data) => {
 				rows.push(new SpreadsheetRow(this, row_data, entries_xml[i++]));
 			});
-			cb(null, rows);
-		});
+			return rows;
 	};
 	
-	addRow = (worksheet_id, data, cb) => {
+	addRow = async (worksheet_id, rowData) : Promise<SpreadsheetRow> => {
 		let data_xml = '<entry xmlns="http://www.w3.org/2005/Atom" xmlns:gsx="http://schemas.google.com/spreadsheets/2006/extended">' + '\n';
-		Object.keys(data).forEach((key) => {
+		Object.keys(rowData).forEach((key) => {
 			if (key != 'id' && key != 'title' && key != 'content' && key != '_links') {
-				data_xml += '<gsx:' + xmlSafeColumnName(key) + '>' + xmlSafeValue(data[key]) + '</gsx:' + xmlSafeColumnName(key) + '>' + '\n'
+				data_xml += '<gsx:' + xmlSafeColumnName(key) + '>' + xmlSafeValue(rowData[key]) + '</gsx:' + xmlSafeColumnName(key) + '>' + '\n'
 			}
 		});
 		data_xml += '</entry>';
-		this.makeFeedRequest(['list', this.ss_key, worksheet_id], 'POST', data_xml, (err, data, new_xml) => {
-			if (err) return cb(err);
+		const {data, xml : new_xml} = await this.makeFeedRequest(['list', this.ss_key, worksheet_id], 'POST', data_xml);
 			const entries_xml = new_xml.match(/<entry[^>]*>([\s\S]*?)<\/entry>/g);
 			const row = new SpreadsheetRow(this, data, entries_xml[0]);
-			cb(null, row);
-		});
+			return row;
 	};
 	
-	getCells = (worksheet_id, opts, cb) => {
+	getCells = async (worksheet_id, opts?) => {
 		// opts is optional
 		if (typeof(opts) == 'function') {
-			cb = opts;
 			opts = {};
 		}
 		
@@ -370,10 +340,9 @@ export class GoogleSpreadsheet {
 		const query = _.assign({}, opts);
 		
 		
-		this.makeFeedRequest(['cells', this.ss_key, worksheet_id], 'GET', query, (err, data, xml) => {
-			if (err) return cb(err);
+		const {data} = await this.makeFeedRequest(['cells', this.ss_key, worksheet_id], 'GET', query);
 			if (data === true) {
-				return cb(new Error('No response to getCells call'))
+				throw Error('No response to getCells call')
 			}
 			
 			const cells = [];
@@ -382,9 +351,7 @@ export class GoogleSpreadsheet {
 			entries.forEach((cell_data) => {
 				cells.push(new SpreadsheetCell(this, worksheet_id, cell_data));
 			});
-			
-			cb(null, cells);
-		});
+			return cells;
 	}
 }
 

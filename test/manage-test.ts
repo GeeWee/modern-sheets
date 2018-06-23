@@ -19,19 +19,15 @@ const doc = docs['private'];
 describe('Managing doc info and sheets', function () {
 	this.timeout(5000);
 	
-	before(done => {
-		doc.useServiceAccountAuth(creds, done);
+	before(async () => {
+		return doc.useServiceAccountAuth(creds);
 	});
 	
 	describe('get doc info', () => {
 		let info;
 		
-		it('can fetch the doc info', done => {
-			doc.getInfo((err, _info) => {
-				assert.notExists(err);
-				info = _info;
-				done();
-			});
+		it('can fetch the doc info', async () => {
+			info = await doc.getInfo();
 		});
 		
 		it('should have the doc id', () => {
@@ -39,7 +35,7 @@ describe('Managing doc info and sheets', function () {
 		});
 		
 		it('should include the document title', () => {
-			info.title.should.be.a.string;
+			info.title.should.be.a('string'); //todo changed
 		});
 		
 		it('should include author metadata', () => {
@@ -67,204 +63,134 @@ describe('Managing doc info and sheets', function () {
 		let sheet;
 		const sheets_to_remove = [];
 		
-		after(done => {
-			async.each(sheets_to_remove, (sheet, nextSheet) => {
-				sheet.del(nextSheet);
-			}, done);
+		after(async () => {
+			for (const sheet of sheets_to_remove){
+				await sheet.del(sheet);
+			}
 		});
 		
-		it('can add a worksheet', done => {
-			doc.addWorksheet({
+		it('can add a worksheet', async () => {
+			sheet = await doc.addWorksheet({
 				title: sheet_title,
 				colCount: 10
-			}, (err, _sheet) => {
-				assert.notExists(err);
-				sheet = _sheet;
+			});
 				sheet.title.should.equal(sheet_title);
 				
 				// check if the sheet is really there
-				doc.getInfo((err, info) => {
-					assert.notExists(err);
+				const info = await doc.getInfo();
 					const added_sheet = info.worksheets.pop();
 					added_sheet.title.should.equal(sheet_title);
-					done();
-				});
-			});
 		});
 		
-		it('can set the header row of a worksheet', done => {
+		it('can set the header row of a worksheet', async () => {
 			const header_vals = ['x1', 'x2', 'x3', 'x4', 'x5'];
-			sheet.setHeaderRow(header_vals, err => {
-				sheet.getCells((err, cells) => {
-					assert.notExists(err);
+			await sheet.setHeaderRow(header_vals);
+				const cells = await sheet.getCells();
 					cells.length.should.equal(5);
 					_.times(header_vals.length, i => {
 						cells[i].value.should.equal(header_vals[i]);
 					});
-					done();
-				});
-			});
 		});
 		
-		it('clears the rest of the header row when setting headers', done => {
+		it('clears the rest of the header row when setting headers', async () => {
 			const header_vals = ['x1', 'x2'];
-			sheet.setHeaderRow(header_vals, err => {
-				assert.notExists(err);
-				sheet.getCells((err, cells) => {
-					assert.notExists(err);
+			await sheet.setHeaderRow(header_vals);
+			const cells = await sheet.getCells();
 					// only returns cells with values in them
 					cells.length.should.equal(2);
-					done();
-				});
-			});
 		});
 		
-		it('can clear a worksheet', done => {
-			sheet.clear(err => {
-				assert.notExists(err);
-				sheet.getCells((err, cells) => {
-					assert.notExists(err);
+		it('can clear a worksheet', async () => {
+			await sheet.clear();
+				const cells = await sheet.getCells();
 					// only returns cells with values in them
 					cells.length.should.equal(0);
-					done();
-				});
-			});
 		});
 		
-		it('can resize a worksheet', done => {
-			sheet.resize({rowCount: 5, colCount: 7}, err => {
-				assert.notExists(err);
-				doc.getInfo((err, info) => {
-					assert.notExists(err);
+		it('can resize a worksheet', async () => {
+			await sheet.resize({rowCount: 5, colCount: 7});
+				const info = await doc.getInfo();
 					const last_sheet = info.worksheets.pop();
 					last_sheet.rowCount.should.equal(5);
 					last_sheet.colCount.should.equal(7);
-					done();
-				});
-			});
 		});
 		
-		it('can set the title of a worksheet', done => {
+		it('can set the title of a worksheet', async () => {
 			const new_title = 'New title ' + (+new Date());
-			sheet.setTitle(new_title, err => {
-				assert.notExists(err);
-				doc.getInfo((err, info) => {
-					assert.notExists(err);
+			await sheet.setTitle(new_title);
+			const info = await doc.getInfo();
 					const last_sheet = info.worksheets.pop();
 					last_sheet.title.should.equal(new_title);
-					done();
-				});
-			});
 		});
 		
-		it('can delete a worksheet with `SpreadsheetWorksheet.del()`', done => {
-			sheet.del(err => {
-				assert.notExists(err);
+		it('can delete a worksheet with `SpreadsheetWorksheet.del()`', async () => {
+			await sheet.del();
 				// check if the sheet is really gone
-				doc.getInfo((err, info) => {
-					assert.notExists(err);
-					assert.notExists(err); //null
+				const info = await doc.getInfo();
 					const last_sheet = info.worksheets.pop();
 					last_sheet.title.should.not.equal(sheet_title);
-					done();
-				});
-			});
 		});
 		
-		it('can delete a worksheet with `GoogleSpreadsheet.removeWorksheet()` passing the sheet object', done => {
-			doc.addWorksheet({
+		it('can delete a worksheet with `GoogleSpreadsheet.removeWorksheet()` passing the sheet object', async () => {
+			const newSheet = await doc.addWorksheet({
 				title: sheet_title,
 				colCount: 10
-			}, (err, _sheet) => {
-				assert.notExists(err);
-				doc.removeWorksheet(_sheet, err => {
-					assert.notExists(err);
-					doc.getInfo((err, info) => {
-						assert.notExists(err);
+			});
+				await doc.removeWorksheet(newSheet);
+					const info = await doc.getInfo();
 						const last_sheet = info.worksheets.pop();
 						last_sheet.title.should.not.equal(sheet_title);
-						done();
-					});
-				});
-			});
 		});
 		
-		it('can delete a worksheet with `GoogleSpreadsheet.removeWorksheet()` passing the sheet ID', done => {
-			doc.addWorksheet({
+		it('can delete a worksheet with `GoogleSpreadsheet.removeWorksheet()` passing the sheet ID', async () => {
+			const newSheet = await doc.addWorksheet({
 				title: sheet_title,
 				colCount: 10
-			}, (err, _sheet) => {
-				assert.notExists(err);
-				doc.removeWorksheet(_sheet.id, err => {
-					assert.notExists(err);
-					doc.getInfo((err, info) => {
-						assert.notExists(err);
+			});
+				await doc.removeWorksheet(newSheet.id);
+					const info = await doc.getInfo();
 						const last_sheet = info.worksheets.pop();
 						last_sheet.title.should.not.equal(sheet_title);
-						done();
 					});
-				});
-			});
-		});
 		
-		it('can delete a worksheet with `GoogleSpreadsheet.removeWorksheet()` passing the index of the sheet', done => {
-			doc.addWorksheet({
+		it('can delete a worksheet with `GoogleSpreadsheet.removeWorksheet()` passing the index of the sheet', async () => {
+			await doc.addWorksheet({
 				title: sheet_title,
 				colCount: 10
-			}, (err, _sheet) => {
-				assert.notExists(err);
-				
-				doc.getInfo((err, info) => {
-					assert.notExists(err);
+			});
+				const info = await doc.getInfo();
 					const sheet_index = info.worksheets.length;
 					
-					doc.removeWorksheet(sheet_index, err => {
-						assert.notExists(err);
-						doc.getInfo((err, info) => {
-							assert.notExists(err);
-							const last_sheet = info.worksheets.pop();
+					await doc.removeWorksheet(sheet_index);
+						const newInfo = await doc.getInfo();
+							const last_sheet = newInfo.worksheets.pop();
 							last_sheet.title.should.not.equal(sheet_title);
-							done();
-						});
-					});
-				});
-			});
 		});
 		
-		it('can add a sheet with specific number of rows and columns', done => {
-			doc.addWorksheet({
+		it('can add a sheet with specific number of rows and columns', async () => {
+			const sheet = await doc.addWorksheet({
 				title: sheet_title,
 				rowCount: 17,
 				colCount: 13
-			}, (err, sheet) => {
-				assert.notExists(err);
+			});
 				sheets_to_remove.push(sheet);
 				
-				doc.getInfo((err, info) => {
-					assert.notExists(err);
+				const info = await doc.getInfo();
 					const new_sheet = info.worksheets.pop();
 					new_sheet.rowCount.should.equal(17);
 					new_sheet.colCount.should.equal(13);
-					done();
-				});
-			});
 		});
 		
-		it('can specify column headers while adding a sheet', done => {
-			doc.addWorksheet({
+		it('can specify column headers while adding a sheet', async () => {
+			const sheet = await doc.addWorksheet({
 				headers: ['header1', 'header2', 'header3']
-			}, (err, sheet) => {
-				assert.notExists(err);
+			});
 				sheets_to_remove.push(sheet);
-				sheet.getCells((err, cells) => {
-					assert.notExists(err);
+				const cells = await sheet.getCells();
 					cells.length.should.equal(3);
 					cells[0].value.should.equal('header1');
 					cells[1].value.should.equal('header2');
 					cells[2].value.should.equal('header3');
-					done();
-				});
-			});
-		});
+		}   );
 	});
 });

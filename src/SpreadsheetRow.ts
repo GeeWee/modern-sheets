@@ -18,30 +18,30 @@ export class SpreadsheetRow {
 		this.spreadsheet = spreadsheet;
 		this._xml = xml;
 		
+		// TODO: Data here should be the parsed XML with $ and all!!!
+		
 		
 		//This is fucked up yo. Rewrite this to reach into the data object directly
-		_.forEach(data, (val, key) => {
+		Object.keys(data).forEach((key) => {
+			var val = data[key];
 			if(key.substring(0, 4) === "gsx:") {
 				if(typeof val === 'object' && Object.keys(val).length === 0) {
 					val = null;
 				}
 				if (key == "gsx:") {
-					//wtf
-					this.gsx = val;
+					this[key.substring(0, 3)] = val;
 				} else {
-					//@ts-ignore
 					this[key.substring(4)] = val;
 				}
 			} else {
 				if (key == "id") {
-					this.id  = val;
+					this[key] = val;
 				} else if (val['_']) {
-					//@ts-ignore
 					this[key] = val['_'];
 				} else if ( key == 'link' ){
-					this._links = [];
+					this['_links'] = [];
 					val = forceArray( val );
-					val.forEach( ( link: any ) => {
+					val.forEach( ( link ) => {
 						this['_links'][ link['$']['rel'] ] = link['$']['href'];
 					});
 				}
@@ -49,7 +49,7 @@ export class SpreadsheetRow {
 		});
 	}
 	
-	save = ( cb : Callback ) => {
+	save = async () => {
 		/*
 		API for edits is very strict with the XML it accepts
 		So we just do a find replace on the original XML.
@@ -67,10 +67,10 @@ export class SpreadsheetRow {
 				data_xml = data_xml.replace( new RegExp('<gsx:'+xmlSafeColumnName(key)+">([\\s\\S]*?)</gsx:"+xmlSafeColumnName(key)+'>'), '1<gsx:'+xmlSafeColumnName(key)+'>'+ xmlSafeValue(this[key]) +'</gsx:'+xmlSafeColumnName(key)+'>');
 			}
 		});
-		this.spreadsheet.makeFeedRequest( this['_links']['edit'], 'PUT', data_xml, cb );
+		return this.spreadsheet.makeFeedRequest( this['_links']['edit'], 'PUT', data_xml );
 	};
 	
-	del = ( cb : Callback ) => {
-		this.spreadsheet.makeFeedRequest( this['_links']['edit'], 'DELETE', null, cb );
+	del = async () => {
+		return this.spreadsheet.makeFeedRequest( this['_links']['edit'], 'DELETE', null );
 	}
 }

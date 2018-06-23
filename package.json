@@ -24,8 +24,10 @@
     "node": ">=0.8.0"
   },
   "dependencies": {
+    "@types/chai-as-promised": "^7.1.0",
     "async": "^2.6.1",
     "axios": "^0.18.0",
+    "chai-as-promised": "^7.1.1",
     "google-auth-library": "^1.6.1",
     "lodash": "^4.17.10",
     "request": "^2.69.0",
