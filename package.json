@@ -1,61 +1,68 @@
 {
-  "author": "Theo Ephraim <theozero@gmail.com> (http://theoephraim.com)",
-  "name": "google-spreadsheet",
-  "description": "Google Spreadsheets Data API -- simple interface to read/write rows/cells, manage sheets",
-  "version": "2.0.4",
-  "license": "Unlicense",
-  "keywords": [
-    "google spreadsheets",
-    "google",
-    "spreadsheet",
-    "spreadsheets",
-    "sheets",
-    "gdata",
-    "api",
-    "google sheets"
-  ],
-  "homepage": "https://github.com/theoephraim/node-google-spreadsheet",
-  "repository": {
-    "type": "git",
-    "url": "git://github.com/theoephraim/node-google-spreadsheet.git"
-  },
-  "main": "index.js",
-  "engines": {
-    "node": ">=0.8.0"
-  },
-  "dependencies": {
-    "@types/chai-as-promised": "^7.1.0",
-    "async": "^2.6.1",
-    "axios": "^0.18.0",
-    "chai-as-promised": "^7.1.1",
-    "google-auth-library": "^1.6.1",
-    "lodash": "^4.17.10",
-    "request": "^2.69.0",
-    "xml2js": "~0.4.0"
-  },
-  "devDependencies": {
-    "@types/chai": "^4.1.4",
-    "@types/lodash": "^4.14.109",
-    "@types/mocha": "^5.2.2",
-    "@types/node": "^10.3.3",
-    "@types/request": "^2.47.1",
-    "@types/xml2js": "^0.4.3",
-    "chai": "^4.1.2",
-    "husky": "^0.14.3",
-    "lint-staged": "^7.2.0",
-    "mocha": "^5.2.0",
-    "prettier": "^1.13.5",
-    "ts-node": "^6.1.1",
-    "typescript": "^2.9.2",
-    "typewiz-core": "^1.0.2",
-    "typewiz-node": "^1.0.3"
-  },
-  "scripts": {
-    "test": "mocha -r ts-node/register test/**/*-test.ts"
-  },
-  "prettier": {
-    "useTabs": true,
-    "singleQuote": true,
-    "trailingComma": "all"
-  }
+	"author": "Theo Ephraim <theozero@gmail.com> (http://theoephraim.com)",
+	"name": "google-spreadsheet",
+	"description": "Google Spreadsheets Data API -- simple interface to read/write rows/cells, manage sheets",
+	"version": "2.0.4",
+	"license": "Unlicense",
+	"keywords": [
+		"google spreadsheets",
+		"google",
+		"spreadsheet",
+		"spreadsheets",
+		"sheets",
+		"gdata",
+		"api",
+		"google sheets"
+	],
+	"homepage": "https://github.com/theoephraim/node-google-spreadsheet",
+	"repository": {
+		"type": "git",
+		"url": "git://github.com/theoephraim/node-google-spreadsheet.git"
+	},
+	"main": "index.js",
+	"engines": {
+		"node": ">=0.8.0"
+	},
+	"dependencies": {
+		"@types/chai-as-promised": "^7.1.0",
+		"async": "^2.6.1",
+		"axios": "^0.18.0",
+		"chai-as-promised": "^7.1.1",
+		"google-auth-library": "^1.6.1",
+		"lodash": "^4.17.10",
+		"request": "^2.69.0",
+		"xml2js": "~0.4.0"
+	},
+	"devDependencies": {
+		"@types/chai": "^4.1.4",
+		"@types/lodash": "^4.14.109",
+		"@types/mocha": "^5.2.2",
+		"@types/node": "^10.3.3",
+		"@types/request": "^2.47.1",
+		"@types/xml2js": "^0.4.3",
+		"chai": "^4.1.2",
+		"husky": "^0.14.3",
+		"lint-staged": "^7.2.0",
+		"mocha": "^5.2.0",
+		"prettier": "^1.13.5",
+		"ts-node": "^6.1.1",
+		"typescript": "^2.9.2",
+		"typewiz-core": "^1.0.2",
+		"typewiz-node": "^1.0.3"
+	},
+	"scripts": {
+		"test": "mocha -r ts-node/register test/**/*-test.ts",
+		"precommit": "lint-staged"
+	},
+	"lint-staged": {
+		"*.{ts,json}": [
+			"prettier --write",
+			"git add"
+		]
+	},
+	"prettier": {
+		"useTabs": true,
+		"singleQuote": true,
+		"trailingComma": "all"
+	}
 }
