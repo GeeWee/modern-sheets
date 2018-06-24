@@ -20,9 +20,7 @@ export class SpreadsheetRow {
 		this.spreadsheet = spreadsheet;
 		this._xml = xml;
 
-		// TODO: Data here should be the parsed XML with $ and all!!!
-
-		//This is fucked up yo. Rewrite this to reach into the data object directly
+		//todo: This is fucked up yo. Rewrite this to reach into the data object directly
 		Object.keys(data).forEach(key => {
 			let val = data[key];
 			if (key.substring(0, 4) === 'gsx:') {

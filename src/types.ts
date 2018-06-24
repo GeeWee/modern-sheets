@@ -7,8 +7,6 @@ export type SpreadsheetRowData = any;
 export type WorksheetData = any;
 export type Authentication = any;
 
-export type Callback<T = any> = (err?: any, res?: T) => void;
-
 export interface Foo {
 	$: { 'gd:etag': string };
 	'app:edited': {

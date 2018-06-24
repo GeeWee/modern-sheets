@@ -72,10 +72,10 @@ export class GoogleSpreadsheet {
 		}
 		this.jwt_client = new gal.JWT(
 			creds.client_email,
-			null,
+			undefined,
 			creds.private_key,
 			GOOGLE_AUTH_SCOPE,
-			null,
+			undefined,
 		);
 		return this.renewJwtAuth();
 	};
@@ -230,7 +230,7 @@ export class GoogleSpreadsheet {
 			title: data.title,
 			updated: data.updated,
 			author: data.author,
-			worksheets: [],
+			worksheets: [] as SpreadsheetWorksheet[],
 		};
 		const worksheets = forceArray(data.entry);
 		worksheets.forEach(ws_data => {
@@ -243,12 +243,7 @@ export class GoogleSpreadsheet {
 
 	// NOTE: worksheet IDs start at 1
 
-	addWorksheet = async opts => {
-		// make opts optional
-		if (typeof opts == 'function') {
-			opts = {};
-		}
-
+	addWorksheet = async (opts: any = {}) => {
 		if (!this.isAuthActive()) {
 			throw Error(REQUIRE_AUTH_MESSAGE);
 		}
@@ -346,7 +341,7 @@ export class GoogleSpreadsheet {
 			return xml.replace('<entry ', '<entry ' + feed_props_str);
 		});
 
-		const rows = [];
+		const rows: SpreadsheetRow[] = [];
 		const entries = forceArray(data.entry);
 		let i = 0;
 		entries.forEach(row_data => {
@@ -387,12 +382,10 @@ export class GoogleSpreadsheet {
 		return new SpreadsheetRow(this, data, entries_xml[0]);
 	};
 
-	getCells = async (worksheet_id, opts?) => {
-		// opts is optional
-		if (typeof opts == 'function') {
-			opts = {};
-		}
-
+	getCells = async (
+		worksheet_id,
+		opts: any = {},
+	): Promise<SpreadsheetCell[]> => {
 		// Supported options are:
 		// min-row, max-row, min-col, max-col, return-empty
 		const query = _.assign({}, opts);
@@ -406,7 +399,7 @@ export class GoogleSpreadsheet {
 			throw Error('No response to getCells call');
 		}
 
-		const cells = [];
+		const cells: SpreadsheetCell[] = [];
 		const entries = forceArray(data['entry']);
 
 		entries.forEach(cell_data => {

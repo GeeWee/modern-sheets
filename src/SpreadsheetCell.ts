@@ -1,19 +1,18 @@
 import { forceArray, xmlSafeValue } from './utils';
 import { GoogleSpreadsheet } from './GoogleSpreadsheet';
-import { Callback, Links, SpreadsheetCellData } from './types';
+import { Links, SpreadsheetCellData } from './types';
 
 export class SpreadsheetCell {
 	private readonly id: string; // ????
-	private readonly row: number;
-	private readonly col: number;
+	public readonly row: number;
+	public readonly col: number;
 	private readonly _links: Links;
 	private batchId: string;
-	private _formula: string;
-	private _numericValue: number;
+	private _formula: string | undefined;
+	private _numericValue: number | undefined;
 	private _value: string;
 	private spreadsheet: GoogleSpreadsheet;
 	private worksheet_id: string;
-	private _needsSave: boolean;
 
 	constructor(
 		spreadsheet: GoogleSpreadsheet,
@@ -60,7 +59,7 @@ export class SpreadsheetCell {
 		this._value = _data['gs:cell']['_'] || '';
 	};
 
-	setValue = async (new_value: string | null) => {
+	setValue = async (new_value: string) => {
 		this.value = new_value;
 		return this.save(); //todo no callback
 	};
@@ -71,11 +70,7 @@ export class SpreadsheetCell {
 		this._value = '';
 	};
 
-	//todo no callback
 	save = async () => {
-		this._needsSave = false;
-
-		//TODO remove?
 		let data_xml =
 			'<entry><id>' +
 			this.id +

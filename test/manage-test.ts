@@ -6,6 +6,7 @@ import { GoogleSpreadsheet } from '../index';
 import _ from 'lodash';
 
 import { should } from 'chai';
+import { SpreadsheetWorksheet } from '../src/SpreadsheetWorksheet';
 
 should();
 
@@ -64,11 +65,11 @@ describe('Managing doc info and sheets', function() {
 	describe('adding, removing, and modifying worksheets', () => {
 		const sheet_title = 'Test sheet ' + +new Date();
 		let sheet;
-		const sheets_to_remove = [];
+		const sheets_to_remove: SpreadsheetWorksheet[] = [];
 
 		after(async () => {
 			for (const sheet of sheets_to_remove) {
-				await sheet.del(sheet);
+				await sheet.del();
 			}
 		});
 

@@ -3,6 +3,7 @@ import * as _ from 'lodash';
 import { GoogleSpreadsheet } from './GoogleSpreadsheet';
 import { Links, WorksheetData } from './types';
 import { SpreadsheetRow } from './SpreadsheetRow';
+import { SpreadsheetCell } from './SpreadsheetCell';
 
 /**
  * TODO: Describe file contents
@@ -43,7 +44,7 @@ export class SpreadsheetWorksheet {
 		this._links['bulkcells'] = this._links['cells'] + '/batch';
 	}
 
-	_setInfo = async (opts?: Partial<WorksheetInfo>) => {
+	_setInfo = async (opts: Partial<WorksheetInfo> = {}) => {
 		const xml = `<entry xmlns="http://www.w3.org/2005/Atom" xmlns:gs="http://schemas.google.com/spreadsheets/2006"><title>${opts.title ||
 			this.title}</title><gs:rowCount>${opts.rowCount ||
 			this.rowCount}</gs:rowCount><gs:colCount>${opts.colCount ||
@@ -70,7 +71,7 @@ export class SpreadsheetWorksheet {
 		const rows = this.colCount;
 		await this.resize({ rowCount: 1, colCount: 1 });
 		const cells = await this.getCells();
-		await cells[0].setValue(null);
+		await cells[0].setValue('');
 		return this.resize({ rowCount: rows, colCount: cols });
 	};
 
@@ -78,7 +79,7 @@ export class SpreadsheetWorksheet {
 		return this.spreadsheet.getRows(this.id, opts);
 	};
 
-	getCells = async (opts: any = {}) => {
+	getCells = async (opts: any = {}): Promise<SpreadsheetCell[]> => {
 		return this.spreadsheet.getCells(this.id, opts);
 	};
 
