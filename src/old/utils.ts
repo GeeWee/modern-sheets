@@ -2,7 +2,7 @@ import axios, { AxiosResponse } from 'axios';
 import * as querystring from 'querystring';
 import * as util from 'util';
 import xml2js from 'xml2js';
-import { AuthCredentials, Authentication, IndexSignature } from '../types';
+import { AuthCredentials, IndexSignature } from '../types';
 
 export function forceArray<T>(val: T | T[]): T[] {
 	if (Array.isArray(val)) return val;

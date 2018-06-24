@@ -7,7 +7,12 @@ export type SpreadsheetCellData = any;
 export type Links = any;
 export type SpreadsheetRowData = any;
 export type WorksheetData = any;
-export type ServiceAccountCredentials = string | any;
+export type ServiceAccountParams = string | ServiceAccountCredentials;
+
+export interface ServiceAccountCredentials {
+	client_email: string;
+	private_key: string;
+}
 
 export interface AuthCredentials {
 	type: string;
@@ -16,7 +21,7 @@ export interface AuthCredentials {
 }
 
 export interface IndexSignature<T = any> {
-	[k: string]: T;
+	[key: string]: T;
 }
 
 export interface SpreadsheetInfo {

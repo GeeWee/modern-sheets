@@ -16,6 +16,7 @@ import {
 	SpreadsheetInfo,
 	GetCellsOptions,
 	ServiceAccountCredentials,
+	ServiceAccountParams,
 } from '../types';
 import axios, { AxiosResponse } from 'axios';
 import * as querystring from 'querystring';
@@ -45,15 +46,16 @@ export class GoogleSpreadsheet {
 
 	// -------------------  Authentication ---------------------
 	useServiceAccountAuth = async (
-		creds: ServiceAccountCredentials,
+		creds: ServiceAccountParams,
 	): Promise<void> => {
 		if (typeof creds == 'string') {
 			creds = require(creds);
 		}
+		const credentials = creds as ServiceAccountCredentials;
 		this.jwt_client = new gal.JWT(
-			creds.client_email,
+			credentials.client_email,
 			undefined,
-			creds.private_key,
+			credentials.private_key,
 			GOOGLE_AUTH_SCOPE,
 			undefined,
 		);
