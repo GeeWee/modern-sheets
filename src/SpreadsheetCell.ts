@@ -1,6 +1,8 @@
 import { forceArray, xmlSafeValue } from './utils';
 import { GoogleSpreadsheet } from './GoogleSpreadsheet';
 import { Links, SpreadsheetCellData } from './types';
+import { isString } from 'util';
+import * as _ from 'lodash';
 
 export class SpreadsheetCell {
 	private readonly id: string; // ????
@@ -12,11 +14,11 @@ export class SpreadsheetCell {
 	private _numericValue: number | undefined;
 	private _value: string;
 	private spreadsheet: GoogleSpreadsheet;
-	private worksheet_id: string;
+	private worksheet_id: number;
 
 	constructor(
 		spreadsheet: GoogleSpreadsheet,
-		worksheet_id: string,
+		worksheet_id: number,
 		data: SpreadsheetCellData,
 	) {
 		let links;
@@ -107,19 +109,18 @@ export class SpreadsheetCell {
 	get value() {
 		return this._value;
 	}
-	set value(val) {
+	set value(val: string | number | undefined) {
 		if (!val) {
 			this._clearValue();
 			return;
 		}
 
-		const numeric_val = parseFloat(val);
-		if (!isNaN(numeric_val)) {
-			this._numericValue = numeric_val;
-			this._value = val.toString();
-		} else {
+		if (_.isString(val)) {
 			this._numericValue = undefined;
 			this._value = val;
+		} else {
+			this._numericValue = val;
+			this._value = val.toString();
 		}
 
 		if (typeof val == 'string' && val.substr(0, 1) === '=') {

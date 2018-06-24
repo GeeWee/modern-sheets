@@ -2,15 +2,16 @@ import { after, describe, before, it } from 'mocha';
 
 import creds from './service-account-creds.json';
 import sheet_ids from './config';
-import { GoogleSpreadsheet } from '../index';
 import _ from 'lodash';
 
 import { should } from 'chai';
 import { SpreadsheetWorksheet } from '../src/SpreadsheetWorksheet';
+import { IndexSignature, SpreadsheetInfo } from '../src/types';
+import { GoogleSpreadsheet } from '../src/GoogleSpreadsheet';
 
 should();
 
-const docs = {};
+const docs: IndexSignature<GoogleSpreadsheet> = {};
 Object.keys(sheet_ids).forEach(key => {
 	docs[key] = new GoogleSpreadsheet(sheet_ids[key]);
 });
@@ -24,7 +25,7 @@ describe('Managing doc info and sheets', function() {
 	});
 
 	describe('get doc info', () => {
-		let info;
+		let info: SpreadsheetInfo;
 
 		it('can fetch the doc info', async () => {
 			info = await doc.getInfo();
@@ -56,7 +57,7 @@ describe('Managing doc info and sheets', function() {
 			info.worksheets.should.have.length.above(0);
 			const sheet = info.worksheets[0];
 			sheet.url.should.include(sheet_ids['private']);
-			sheet.title.should.be.a.string;
+			sheet.title.should.be.a('string');
 			sheet.rowCount.should.be.a('number');
 			sheet.colCount.should.be.a('number');
 		});
@@ -64,7 +65,7 @@ describe('Managing doc info and sheets', function() {
 
 	describe('adding, removing, and modifying worksheets', () => {
 		const sheet_title = 'Test sheet ' + +new Date();
-		let sheet;
+		let sheet: SpreadsheetWorksheet;
 		const sheets_to_remove: SpreadsheetWorksheet[] = [];
 
 		after(async () => {
@@ -83,7 +84,7 @@ describe('Managing doc info and sheets', function() {
 			// check if the sheet is really there
 			const info = await doc.getInfo();
 			const added_sheet = info.worksheets.pop();
-			added_sheet.title.should.equal(sheet_title);
+			added_sheet!.title.should.equal(sheet_title);
 		});
 
 		it('can set the header row of a worksheet', async () => {
@@ -115,8 +116,8 @@ describe('Managing doc info and sheets', function() {
 			await sheet.resize({ rowCount: 5, colCount: 7 });
 			const info = await doc.getInfo();
 			const last_sheet = info.worksheets.pop();
-			last_sheet.rowCount.should.equal(5);
-			last_sheet.colCount.should.equal(7);
+			last_sheet!.rowCount.should.equal(5);
+			last_sheet!.colCount.should.equal(7);
 		});
 
 		it('can set the title of a worksheet', async () => {
@@ -124,7 +125,7 @@ describe('Managing doc info and sheets', function() {
 			await sheet.setTitle(new_title);
 			const info = await doc.getInfo();
 			const last_sheet = info.worksheets.pop();
-			last_sheet.title.should.equal(new_title);
+			last_sheet!.title.should.equal(new_title);
 		});
 
 		it('can delete a worksheet with `SpreadsheetWorksheet.del()`', async () => {
@@ -132,7 +133,7 @@ describe('Managing doc info and sheets', function() {
 			// check if the sheet is really gone
 			const info = await doc.getInfo();
 			const last_sheet = info.worksheets.pop();
-			last_sheet.title.should.not.equal(sheet_title);
+			last_sheet!.title.should.not.equal(sheet_title);
 		});
 
 		it('can delete a worksheet with `GoogleSpreadsheet.removeWorksheet()` passing the sheet object', async () => {
@@ -143,7 +144,7 @@ describe('Managing doc info and sheets', function() {
 			await doc.removeWorksheet(newSheet);
 			const info = await doc.getInfo();
 			const last_sheet = info.worksheets.pop();
-			last_sheet.title.should.not.equal(sheet_title);
+			last_sheet!.title.should.not.equal(sheet_title);
 		});
 
 		it('can delete a worksheet with `GoogleSpreadsheet.removeWorksheet()` passing the sheet ID', async () => {
@@ -154,7 +155,7 @@ describe('Managing doc info and sheets', function() {
 			await doc.removeWorksheet(newSheet.id);
 			const info = await doc.getInfo();
 			const last_sheet = info.worksheets.pop();
-			last_sheet.title.should.not.equal(sheet_title);
+			last_sheet!.title.should.not.equal(sheet_title);
 		});
 
 		it('can delete a worksheet with `GoogleSpreadsheet.removeWorksheet()` passing the index of the sheet', async () => {
@@ -168,7 +169,7 @@ describe('Managing doc info and sheets', function() {
 			await doc.removeWorksheet(sheet_index);
 			const newInfo = await doc.getInfo();
 			const last_sheet = newInfo.worksheets.pop();
-			last_sheet.title.should.not.equal(sheet_title);
+			last_sheet!.title.should.not.equal(sheet_title);
 		});
 
 		it('can add a sheet with specific number of rows and columns', async () => {
@@ -181,8 +182,8 @@ describe('Managing doc info and sheets', function() {
 
 			const info = await doc.getInfo();
 			const new_sheet = info.worksheets.pop();
-			new_sheet.rowCount.should.equal(17);
-			new_sheet.colCount.should.equal(13);
+			new_sheet!.rowCount.should.equal(17);
+			new_sheet!.colCount.should.equal(13);
 		});
 
 		it('can specify column headers while adding a sheet', async () => {

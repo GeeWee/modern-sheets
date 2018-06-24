@@ -2,19 +2,20 @@ import { describe, it, before } from 'mocha';
 
 import creds from './service-account-creds.json';
 import sheet_ids from './config';
-import { GoogleSpreadsheet } from '../index';
 import _ from 'lodash';
 import path from 'path';
 
 import { should, assert, expect } from 'chai';
 import * as chai from 'chai';
 import cap from 'chai-as-promised';
+import { IndexSignature } from '../src/types';
+import { GoogleSpreadsheet } from '../src/GoogleSpreadsheet';
 
 chai.use(cap);
 
 should();
 
-const docs = {};
+const docs: IndexSignature<GoogleSpreadsheet> = {};
 Object.keys(sheet_ids).forEach(key => {
 	docs[key] = new GoogleSpreadsheet(sheet_ids[key]);
 });

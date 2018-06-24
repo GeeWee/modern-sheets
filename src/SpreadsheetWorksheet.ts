@@ -17,11 +17,11 @@ interface WorksheetInfo {
 
 export class SpreadsheetWorksheet {
 	private spreadsheet: GoogleSpreadsheet;
-	private url: string;
-	private readonly id: string;
-	private title: string;
-	private rowCount: number;
-	private colCount: number;
+	public url: string;
+	public readonly id: number;
+	public title: string;
+	public rowCount: number;
+	public colCount: number;
 	private readonly _links: Links;
 
 	constructor(spreadsheet: GoogleSpreadsheet, data: WorksheetData) {

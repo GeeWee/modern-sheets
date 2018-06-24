@@ -1,18 +1,21 @@
 import { after, describe, before, it } from 'mocha';
 import creds from './service-account-creds.json';
 import sheet_ids from './config';
-import { GoogleSpreadsheet } from '../index';
 import _ from 'lodash';
 
 import { should } from 'chai';
+import { IndexSignature } from '../src/types';
+import { GoogleSpreadsheet } from '../src/GoogleSpreadsheet';
+import { SpreadsheetWorksheet } from '../src/SpreadsheetWorksheet';
+import { SpreadsheetRow } from '../src/SpreadsheetRow';
 should();
 
-const docs = {};
+const docs: IndexSignature<GoogleSpreadsheet> = {};
 Object.keys(sheet_ids).forEach(key => {
 	docs[key] = new GoogleSpreadsheet(sheet_ids[key]);
 });
 const doc = docs['private'];
-let sheet;
+let sheet: SpreadsheetWorksheet;
 
 const MAX_NUM = 5;
 const NUMBERS = _.times(MAX_NUM);
@@ -33,7 +36,7 @@ describe('Row-based feeds', function() {
 	});
 
 	describe('adding, updating, removing rows', () => {
-		let row;
+		let row: SpreadsheetRow;
 
 		it('can add a row', async () => {
 			const new_data = {

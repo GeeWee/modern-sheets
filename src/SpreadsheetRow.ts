@@ -1,16 +1,19 @@
 import { forceArray, xmlSafeColumnName, xmlSafeValue } from './utils';
 import * as _ from 'lodash';
 import { GoogleSpreadsheet } from './GoogleSpreadsheet';
-import { Links, SpreadsheetRowData } from './types';
+import { IndexSignature, Links, SpreadsheetRowData } from './types';
 
 /**
  * TODO: Describe file contents
  */
 
-export class SpreadsheetRow {
+export class SpreadsheetRow implements IndexSignature {
 	private spreadsheet: GoogleSpreadsheet;
 	private _xml: string;
 	private _links: Links;
+
+	// Index signature for rows.
+	[k: string]: any;
 
 	constructor(
 		spreadsheet: GoogleSpreadsheet,
@@ -40,7 +43,7 @@ export class SpreadsheetRow {
 				} else if (key == 'link') {
 					this['_links'] = [];
 					val = forceArray(val);
-					val.forEach(link => {
+					val.forEach((link: any) => {
 						this['_links'][link['$']['rel']] = link['$']['href'];
 					});
 				}

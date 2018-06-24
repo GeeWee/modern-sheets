@@ -1,20 +1,23 @@
 import { after, describe, before, it } from 'mocha';
 
-import { GoogleSpreadsheet } from '../index';
-
 import creds from './service-account-creds.json';
 import sheet_ids from './config';
 
-import { should, expect } from 'chai';
-
+import { should, expect, default as chai } from 'chai';
+import { GoogleSpreadsheet } from '../src/GoogleSpreadsheet';
+import { IndexSignature } from '../src/types';
+import { SpreadsheetWorksheet } from '../src/SpreadsheetWorksheet';
+import { SpreadsheetCell } from '../src/SpreadsheetCell';
+import cap from 'chai-as-promised';
+chai.use(cap);
 should();
 
-const docs = {};
+const docs: IndexSignature<GoogleSpreadsheet> = {};
 Object.keys(sheet_ids).forEach(key => {
 	docs[key] = new GoogleSpreadsheet(sheet_ids[key]);
 });
 const doc = docs['private'];
-let sheet;
+let sheet: SpreadsheetWorksheet;
 
 const NUM_ROWS = 10;
 const NUM_COLS = 10;
@@ -100,7 +103,7 @@ describe('Cell-based feeds', function() {
 	});
 
 	describe('manipulating cell data', () => {
-		let cell;
+		let cell: SpreadsheetCell;
 
 		before(async () => {
 			const cells = await sheet.getCells({
@@ -117,40 +120,40 @@ describe('Cell-based feeds', function() {
 
 		it('can update a single cell by calling `setValue`', async () => {
 			await cell.setValue('HELLO');
-			cell.value.should.equal('HELLO');
+			cell.value!.should.equal('HELLO');
 
 			const cells = await sheet.getCells({});
-			cells[0].value.should.equal('HELLO');
+			cells[0].value!.should.equal('HELLO');
 		});
 
 		it('can update a single cell by `save`', async () => {
 			cell.value = 'GOODBYE';
 			await cell.save();
-			cell.value.should.equal('GOODBYE');
+			cell.value!.should.equal('GOODBYE');
 			const cells = await sheet.getCells({});
-			cells[0].value.should.equal('GOODBYE');
+			cells[0].value!.should.equal('GOODBYE');
 		});
 
 		it('supports `value` to numeric values', async () => {
 			cell.value = 123;
-			cell.value.should.equal('123');
-			cell.numericValue.should.equal(123);
+			cell.value!.should.equal('123');
+			cell.numericValue!.should.equal(123);
 			(cell.formula === undefined).should.be.true;
 
 			await cell.save();
-			cell.value.should.equal('123');
-			cell.numericValue.should.equal(123);
+			cell.value!.should.equal('123');
+			cell.numericValue!.should.equal(123);
 			(cell.formula === undefined).should.be.true;
 		});
 
 		it('supports setting `numericValue`', async () => {
 			cell.numericValue = 456;
-			cell.value.should.equal('456');
+			cell.value!.should.equal('456');
 			cell.numericValue.should.equal(456);
 			(cell.formula === undefined).should.be.true;
 
 			await cell.save();
-			cell.value.should.equal('456');
+			cell.value!.should.equal('456');
 			cell.numericValue.should.equal(456);
 			(cell.formula === undefined).should.be.true;
 		});
@@ -159,7 +162,7 @@ describe('Cell-based feeds', function() {
 			let err;
 
 			try {
-				cell.numericValue = 'abc';
+				cell.numericValue = 'abc' as any;
 			} catch (_err) {
 				err = _err;
 			}
@@ -168,12 +171,12 @@ describe('Cell-based feeds', function() {
 
 		it('supports non-numeric values', async () => {
 			cell.value = 'ABC';
-			cell.value.should.equal('ABC');
+			cell.value!.should.equal('ABC');
 			(cell.numericValue === undefined).should.be.true;
 			(cell.formula === undefined).should.be.true;
 
 			await cell.save();
-			cell.value.should.equal('ABC');
+			cell.value!.should.equal('ABC');
 			(cell.numericValue === undefined).should.be.true;
 			(cell.formula === undefined).should.be.true;
 		});
@@ -191,63 +194,63 @@ describe('Cell-based feeds', function() {
 		it('supports formulas that resolve to a numeric value', async () => {
 			cell.formula = '=ROW()';
 			(cell.numericValue === undefined).should.be.true;
-			cell.value.should.equal('*SAVE TO GET NEW VALUE*');
+			cell.value!.should.equal('*SAVE TO GET NEW VALUE*');
 			cell.formula.should.equal('=ROW()');
 			await cell.save();
-			cell.value.should.equal('1');
-			cell.numericValue.should.equal(1);
+			cell.value!.should.equal('1');
+			cell.numericValue!.should.equal(1);
 			cell.formula.should.equal('=ROW()');
 		});
 
 		it('persists the new formula value', async () => {
 			const cells = await sheet.getCells({});
-			cells[0].value.should.equal('1');
-			cells[0].numericValue.should.equal(1);
-			cells[0].formula.should.equal('=ROW()');
+			cells[0].value!.should.equal('1');
+			cells[0].numericValue!.should.equal(1);
+			cells[0].formula!.should.equal('=ROW()');
 		});
 
 		it('supports formulas that resolve to non-numeric values', async () => {
 			cell.formula = '=IF(TRUE, "ABC", "DEF")';
 			await cell.save();
-			cell.value.should.equal('ABC');
+			cell.value!.should.equal('ABC');
 			(cell.numericValue === undefined).should.be.true;
 			cell.formula.should.equal('=IF(TRUE, "ABC", "DEF")');
 		});
 
 		it('supports setting the formula via the `value` property', async () => {
 			cell.value = '=COLUMN()';
-			cell.value.should.equal('*SAVE TO GET NEW VALUE*');
-			cell.formula.should.equal('=COLUMN()');
+			cell.value!.should.equal('*SAVE TO GET NEW VALUE*');
+			cell.formula!.should.equal('=COLUMN()');
 			(cell.numericValue === undefined).should.be.true;
 			await cell.save();
-			cell.value.should.equal('1');
-			cell.numericValue.should.equal(1);
-			cell.formula.should.equal('=COLUMN()');
+			cell.value!.should.equal('1');
+			cell.numericValue!.should.equal(1);
+			cell.formula!.should.equal('=COLUMN()');
 		});
 
 		it('supports clearing the `value`', async () => {
 			cell.value = '4';
 			cell.value = '';
-			cell.value.should.equal('');
+			cell.value!.should.equal('');
 			(cell.numericValue === undefined).should.be.true;
 			(cell.formula === undefined).should.be.true;
 
 			await cell.save();
-			cell.value.should.equal('');
+			cell.value!.should.equal('');
 			(cell.numericValue === undefined).should.be.true;
 			(cell.formula === undefined).should.be.true;
 		});
 
 		it('can update a single cell with linefeed in value', async () => {
 			await cell.setValue('HELLO\nWORLD');
-			cell.value.should.equal('HELLO\nWORLD');
+			cell.value!.should.equal('HELLO\nWORLD');
 			const cells = await sheet.getCells({});
-			cells[0].value.should.equal('HELLO\nWORLD');
+			cells[0].value!.should.equal('HELLO\nWORLD');
 		});
 	});
 
 	describe('bulk cell updates', () => {
-		let cells;
+		let cells: SpreadsheetCell[];
 
 		before(async () => {
 			const _cells = await sheet.getCells({
@@ -265,9 +268,9 @@ describe('Cell-based feeds', function() {
 			cells[1].value = '2';
 			cells[2].formula = '=A1+B1';
 			await sheet.bulkUpdateCells(cells);
-			cells[0].numericValue.should.equal(1);
-			cells[1].numericValue.should.equal(2);
-			cells[2].numericValue.should.equal(3);
+			cells[0].numericValue!.should.equal(1);
+			cells[1].numericValue!.should.equal(2);
+			cells[2].numericValue!.should.equal(3);
 		});
 	});
 });

@@ -1,11 +1,42 @@
 /**
  * TODO: Describe file contents
  */
+import { SpreadsheetWorksheet } from './SpreadsheetWorksheet';
+
 export type SpreadsheetCellData = any;
 export type Links = any;
 export type SpreadsheetRowData = any;
 export type WorksheetData = any;
 export type Authentication = any;
+
+export interface AuthCredentials {
+	type: string;
+	value: string;
+	expires: number;
+}
+
+export interface IndexSignature<T = any> {
+	[k: string]: T;
+}
+
+export interface SpreadsheetInfo {
+	id: string;
+	title: string;
+	updated: any;
+	author: {
+		name: string;
+		email: string;
+	};
+	worksheets: SpreadsheetWorksheet[];
+}
+
+export interface GetCellsOptions {
+	'min-row': number;
+	'max-row': number;
+	'min-col': number;
+	'max-col': number;
+	'return-empty': boolean;
+}
 
 export interface Foo {
 	$: { 'gd:etag': string };
