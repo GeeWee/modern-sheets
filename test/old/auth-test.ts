@@ -1,15 +1,15 @@
 import { describe, it, before } from 'mocha';
 
-import creds from './service-account-creds.json';
-import sheet_ids from './config';
+import creds from '../service-account-creds.json';
+import sheet_ids from '../config';
 import _ from 'lodash';
 import path from 'path';
 
 import { should, assert, expect } from 'chai';
 import * as chai from 'chai';
 import cap from 'chai-as-promised';
-import { IndexSignature } from '../src/types';
-import { GoogleSpreadsheet } from '../src/GoogleSpreadsheet';
+import { IndexSignature } from '../../src/types';
+import { GoogleSpreadsheet } from '../../src/old/GoogleSpreadsheet';
 
 chai.use(cap);
 

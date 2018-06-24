@@ -1,7 +1,7 @@
 import { forceArray, xmlSafeColumnName, xmlSafeValue } from './utils';
 import * as _ from 'lodash';
 import { GoogleSpreadsheet } from './GoogleSpreadsheet';
-import { IndexSignature, Links, SpreadsheetRowData } from './types';
+import { IndexSignature, Links, SpreadsheetRowData } from '../types';
 
 /**
  * TODO: Describe file contents

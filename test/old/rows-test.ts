@@ -1,13 +1,13 @@
 import { after, describe, before, it } from 'mocha';
-import creds from './service-account-creds.json';
-import sheet_ids from './config';
+import creds from '../service-account-creds.json';
+import sheet_ids from '../config';
 import _ from 'lodash';
 
 import { should } from 'chai';
-import { IndexSignature } from '../src/types';
-import { GoogleSpreadsheet } from '../src/GoogleSpreadsheet';
-import { SpreadsheetWorksheet } from '../src/SpreadsheetWorksheet';
-import { SpreadsheetRow } from '../src/SpreadsheetRow';
+import { IndexSignature } from '../../src/types';
+import { GoogleSpreadsheet } from '../../src/old/GoogleSpreadsheet';
+import { SpreadsheetWorksheet } from '../../src/old/SpreadsheetWorksheet';
+import { SpreadsheetRow } from '../../src/old/SpreadsheetRow';
 should();
 
 const docs: IndexSignature<GoogleSpreadsheet> = {};

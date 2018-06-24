@@ -12,11 +12,11 @@ import { SpreadsheetWorksheet } from './SpreadsheetWorksheet';
 import { SpreadsheetRow } from './SpreadsheetRow';
 import { SpreadsheetCell } from './SpreadsheetCell';
 import {
-	Authentication,
 	AuthCredentials,
 	SpreadsheetInfo,
 	GetCellsOptions,
-} from './types';
+	ServiceAccountCredentials,
+} from '../types';
 import axios, { AxiosResponse } from 'axios';
 import * as querystring from 'querystring';
 import * as util from 'util';
@@ -44,7 +44,9 @@ export class GoogleSpreadsheet {
 	}
 
 	// -------------------  Authentication ---------------------
-	useServiceAccountAuth = async (creds: string | any): Promise<void> => {
+	useServiceAccountAuth = async (
+		creds: ServiceAccountCredentials,
+	): Promise<void> => {
 		if (typeof creds == 'string') {
 			creds = require(creds);
 		}

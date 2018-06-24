@@ -1,7 +1,7 @@
 import { forceArray } from './utils';
 import * as _ from 'lodash';
 import { GoogleSpreadsheet } from './GoogleSpreadsheet';
-import { Links, WorksheetData } from './types';
+import { Links, WorksheetData } from '../types';
 import { SpreadsheetRow } from './SpreadsheetRow';
 import { SpreadsheetCell } from './SpreadsheetCell';
 

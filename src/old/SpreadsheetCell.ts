@@ -1,6 +1,6 @@
 import { forceArray, xmlSafeValue } from './utils';
 import { GoogleSpreadsheet } from './GoogleSpreadsheet';
-import { Links, SpreadsheetCellData } from './types';
+import { Links, SpreadsheetCellData } from '../types';
 import { isString } from 'util';
 import * as _ from 'lodash';
 

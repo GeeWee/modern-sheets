@@ -1,13 +1,13 @@
 /**
  * TODO: Describe file contents
  */
-import { SpreadsheetWorksheet } from './SpreadsheetWorksheet';
+import { SpreadsheetWorksheet } from './old/SpreadsheetWorksheet';
 
 export type SpreadsheetCellData = any;
 export type Links = any;
 export type SpreadsheetRowData = any;
 export type WorksheetData = any;
-export type Authentication = any;
+export type ServiceAccountCredentials = string | any;
 
 export interface AuthCredentials {
 	type: string;

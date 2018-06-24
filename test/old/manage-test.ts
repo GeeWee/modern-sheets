@@ -1,13 +1,13 @@
 import { after, describe, before, it } from 'mocha';
 
-import creds from './service-account-creds.json';
-import sheet_ids from './config';
+import creds from '../service-account-creds.json';
+import sheet_ids from '../config';
 import _ from 'lodash';
 
 import { should } from 'chai';
-import { SpreadsheetWorksheet } from '../src/SpreadsheetWorksheet';
-import { IndexSignature, SpreadsheetInfo } from '../src/types';
-import { GoogleSpreadsheet } from '../src/GoogleSpreadsheet';
+import { SpreadsheetWorksheet } from '../../src/old/SpreadsheetWorksheet';
+import { IndexSignature, SpreadsheetInfo } from '../../src/types';
+import { GoogleSpreadsheet } from '../../src/old/GoogleSpreadsheet';
 
 should();
 
@@ -93,7 +93,7 @@ describe('Managing doc info and sheets', function() {
 			const cells = await sheet.getCells();
 			cells.length.should.equal(5);
 			_.times(header_vals.length, i => {
-				cells[i].value.should.equal(header_vals[i]);
+				cells[i].value!.should.equal(header_vals[i]);
 			});
 		});
 
@@ -193,9 +193,9 @@ describe('Managing doc info and sheets', function() {
 			sheets_to_remove.push(sheet);
 			const cells = await sheet.getCells();
 			cells.length.should.equal(3);
-			cells[0].value.should.equal('header1');
-			cells[1].value.should.equal('header2');
-			cells[2].value.should.equal('header3');
+			cells[0].value!.should.equal('header1');
+			cells[1].value!.should.equal('header2');
+			cells[2].value!.should.equal('header3');
 		});
 	});
 });

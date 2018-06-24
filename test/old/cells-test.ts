@@ -1,13 +1,13 @@
 import { after, describe, before, it } from 'mocha';
 
-import creds from './service-account-creds.json';
-import sheet_ids from './config';
+import creds from '../service-account-creds.json';
+import sheet_ids from '../config';
 
 import { should, expect, default as chai } from 'chai';
-import { GoogleSpreadsheet } from '../src/GoogleSpreadsheet';
-import { IndexSignature } from '../src/types';
-import { SpreadsheetWorksheet } from '../src/SpreadsheetWorksheet';
-import { SpreadsheetCell } from '../src/SpreadsheetCell';
+import { GoogleSpreadsheet } from '../../src/old/GoogleSpreadsheet';
+import { IndexSignature } from '../../src/types';
+import { SpreadsheetWorksheet } from '../../src/old/SpreadsheetWorksheet';
+import { SpreadsheetCell } from '../../src/old/SpreadsheetCell';
 import cap from 'chai-as-promised';
 chai.use(cap);
 should();
