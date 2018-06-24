@@ -1,4 +1,3 @@
-import asynclib from 'async';
 import { after, describe, before, it } from 'mocha';
 import creds from './service-account-creds.json';
 import sheet_ids from './config';

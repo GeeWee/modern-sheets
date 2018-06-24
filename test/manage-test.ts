@@ -4,9 +4,8 @@ import creds from './service-account-creds.json';
 import sheet_ids from './config';
 import { GoogleSpreadsheet } from '../index';
 import _ from 'lodash';
-import async from 'async';
 
-import { should, assert } from 'chai';
+import { should} from 'chai';
 
 should();
 

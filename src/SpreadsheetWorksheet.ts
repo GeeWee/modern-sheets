@@ -1,7 +1,7 @@
 import { forceArray } from './utils';
 import * as _ from 'lodash';
 import { GoogleSpreadsheet } from './GoogleSpreadsheet';
-import { Callback, Links, WorksheetData } from './types';
+import { Links, WorksheetData } from './types';
 import { SpreadsheetRow } from './SpreadsheetRow';
 
 /**
@@ -17,11 +17,11 @@ interface WorksheetInfo {
 export class SpreadsheetWorksheet{
 	private spreadsheet: GoogleSpreadsheet;
 	private url: string;
-	private id: string;
+	private readonly id: string;
 	private title: string;
 	private rowCount: number;
 	private colCount: number;
-	private _links: Links;
+	private readonly _links: Links;
 	
 	constructor(spreadsheet: GoogleSpreadsheet, data: WorksheetData){
 		let links;
@@ -79,8 +79,8 @@ export class SpreadsheetWorksheet{
 		return this.spreadsheet.addRow(this.id, data);
 	};
 	
-	bulkUpdateCells = async (cells?: any[]) => {
-		const entries = cells.map((cell, i) => {
+	bulkUpdateCells = async (cells: any[]) => {
+		const entries = cells.map((cell) => {
 			cell._needsSave = false;
 			return `<entry>
         <batch:id>${cell.batchId}</batch:id>

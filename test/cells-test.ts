@@ -4,10 +4,8 @@ import { GoogleSpreadsheet } from '../index';
 
 import creds from './service-account-creds.json';
 import sheet_ids from './config';
-import _ from 'lodash';
-import async from 'async';
 
-import { should, assert, expect } from 'chai';
+import { should, expect } from 'chai';
 
 should();
 
@@ -24,14 +22,12 @@ const NUM_COLS = 10;
 describe('Cell-based feeds', function () {
 	this.timeout(5000);
 	
-	//todo refactor
 	before(async () => {
 		await doc.useServiceAccountAuth(creds);
-		const _sheet = await doc.addWorksheet({
+		sheet = await doc.addWorksheet({
 			rowCount: NUM_ROWS,
 			colCount: NUM_COLS
 		});
-		sheet = _sheet;
 	});
 	
 	after(async () => {

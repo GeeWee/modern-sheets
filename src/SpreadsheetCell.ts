@@ -57,7 +57,7 @@ export class SpreadsheetCell {
 		this._value = _data['gs:cell']['_'] || '';
 	};
 	
-	setValue = async (new_value: string|null, cb: Callback = () => {}) => {
+	setValue = async (new_value: string|null) => {
 		this.value = new_value;
 		return this.save(); //todo no callback
 	};
@@ -73,7 +73,6 @@ export class SpreadsheetCell {
 		this._needsSave = false;
 		
 		//TODO remove?
-		const edit_id = 'https://spreadsheets.google.com/feeds/cells/key/worksheetId/private/full/R' + this.row + 'C' + this.col;
 		let data_xml =
 			'<entry><id>' + this.id + '</id>' +
 			'<link rel="edit" type="application/atom+xml" href="' + this.id + '"/>' +
@@ -85,8 +84,8 @@ export class SpreadsheetCell {
 		this.updateValuesFromResponseData(response.data);
 	};
 	
-	del = async (cb : Callback) => {
-		return this.setValue('', cb);
+	del = async () => {
+		return this.setValue('');
 	};
 	
 	// GETTERS AND SETTERS

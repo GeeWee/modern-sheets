@@ -4,7 +4,6 @@ import creds from './service-account-creds.json';
 import sheet_ids from './config';
 import { GoogleSpreadsheet } from '../index';
 import _ from 'lodash';
-import async from 'async';
 import path from 'path';
 
 
@@ -20,10 +19,6 @@ const docs = {};
 Object.keys(sheet_ids).forEach(key => {
 	docs[key] = new GoogleSpreadsheet(sheet_ids[key]);
 });
-
-function getSheetName() {
-	return 'test sheet' + (+new Date());
-}
 
 describe('Authentication', function () {
 	this.timeout(5000);
@@ -137,6 +132,6 @@ describe('with auth', function () {
 	});
 	
 	it('writing should fail if user does not have access', async () => {
-		expect(docs['public-read-only'].addWorksheet()).to.be.rejectedWith('Request failed with status code 403');
+		return expect(docs['public-read-only'].addWorksheet()).to.be.rejectedWith('Request failed with status code 403');
 	});
 });

@@ -20,19 +20,19 @@ _This example is simply meant to show some of the things you can do._
 Note (the comments) that many of the calls are actually asynchronous, but I skipped showing the callbacks to make the example shorter. You also don't have to use [async](https://github.com/caolan/async) for control flow, but I find it helpful.
 
 ```javascript
-var GoogleSpreadsheet = require('google-spreadsheet');
-var async = require('async');
+const GoogleSpreadsheet = require('google-spreadsheet');
+const async = require('async');
 
 // spreadsheet key is the long id in the sheets URL
-var doc = new GoogleSpreadsheet('<spreadsheet key>');
-var sheet;
+const doc = new GoogleSpreadsheet('<spreadsheet key>');
+const sheet;
 
 async.series([
   function setAuth(step) {
     // see notes below for authentication instructions!
-    var creds = require('./google-generated-creds.json');
+    const creds = require('./google-generated-creds.json');
     // OR, if you cannot save the file locally (like on heroku)
-    var creds_json = {
+    const creds_json = {
       client_email: 'yourserviceaccountemailhere@google.com',
       private_key: 'your long private key stuff here'
     }
@@ -72,7 +72,7 @@ async.series([
       'max-row': 5,
       'return-empty': true
     }, function(err, cells) {
-      var cell = cells[0];
+      const cell = cells[0];
       console.log('Cell R'+cell.row+'C'+cell.col+' = '+cell.value);
 
       // cells have a value, numericValue, and formula

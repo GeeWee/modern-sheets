@@ -1,7 +1,7 @@
 import { forceArray, xmlSafeColumnName, xmlSafeValue } from './utils';
 import * as _ from 'lodash';
 import { GoogleSpreadsheet } from './GoogleSpreadsheet';
-import { Callback, Links, SpreadsheetRowData } from './types';
+import { Links, SpreadsheetRowData } from './types';
 
 /**
  * TODO: Describe file contents
@@ -11,8 +11,8 @@ export class SpreadsheetRow {
 	private spreadsheet: GoogleSpreadsheet;
 	private _xml: string;
 	private _links: Links;
-	private id: string;
-	private gsx: any;
+	
+	
 	
 	constructor(spreadsheet : GoogleSpreadsheet, data: SpreadsheetRowData, xml: string){
 		this.spreadsheet = spreadsheet;
@@ -23,7 +23,7 @@ export class SpreadsheetRow {
 		
 		//This is fucked up yo. Rewrite this to reach into the data object directly
 		Object.keys(data).forEach((key) => {
-			var val = data[key];
+			let val = data[key];
 			if(key.substring(0, 4) === "gsx:") {
 				if(typeof val === 'object' && Object.keys(val).length === 0) {
 					val = null;

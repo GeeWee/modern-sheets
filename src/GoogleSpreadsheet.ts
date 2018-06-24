@@ -1,5 +1,3 @@
-import async from 'async';
-import request from 'request';
 import xml2js from 'xml2js';
 import _ from 'lodash';
 import * as gal from 'google-auth-library';
@@ -8,7 +6,7 @@ import { forceArray, xmlSafeColumnName, xmlSafeValue } from './utils';
 import { SpreadsheetWorksheet } from './SpreadsheetWorksheet';
 import { SpreadsheetRow } from './SpreadsheetRow';
 import { SpreadsheetCell } from './SpreadsheetCell';
-import { Authentication, Callback } from './types';
+import { Authentication} from './types';
 import axios, { AxiosResponse } from 'axios';
 import * as querystring from 'querystring';
 import * as util from 'util';
@@ -34,7 +32,7 @@ export class GoogleSpreadsheet {
 	private jwt_client: JWT;
 	private google_auth: any; //todo remove? -- type should be googleauth??
 	private auth_client: GoogleAuth;
-	private ss_key: string;
+	private readonly ss_key: string;
 	private worksheets: any[];
 	private info: { id: any; title: any; updated: any; author: any; worksheets: any[] };
 	
@@ -61,9 +59,7 @@ export class GoogleSpreadsheet {
 	
 	// deprecated username/password login method
 	// leaving it here to help notify users why it doesn't work
-	setAuth = (username: string, password: string) => {
-		throw Error('Google has officially deprecated ClientLogin. Please upgrade this module and see the readme for more instrucations')
-	};
+	
 	
 	useServiceAccountAuth = async (creds: string | any) => {
 		if (typeof creds == 'string') {
@@ -123,16 +119,7 @@ export class GoogleSpreadsheet {
 		}
 		
 		await this.ensureAuthIsUpToDate();
-			const result = await this.makeRequest(headers, method, url, query_or_data);
-			return result;/*
-			.then((res) => {
-				if (cb){
-					cb(null, res.data, res.xml)
-				} else {
-					return res;
-				}
-			})
-			.catch(err => cb(err));*/
+			return this.makeRequest(headers, method, url, query_or_data);
 	};
 	
 	private makeRequest = async (headers, method: any, url, query_or_data: any): Promise<{data: any, xml:any}> => {
@@ -325,8 +312,7 @@ export class GoogleSpreadsheet {
 		data_xml += '</entry>';
 		const {data, xml : new_xml} = await this.makeFeedRequest(['list', this.ss_key, worksheet_id], 'POST', data_xml);
 			const entries_xml = new_xml.match(/<entry[^>]*>([\s\S]*?)<\/entry>/g);
-			const row = new SpreadsheetRow(this, data, entries_xml[0]);
-			return row;
+			return new SpreadsheetRow(this, data, entries_xml[0]);
 	};
 	
 	getCells = async (worksheet_id, opts?) => {
@@ -347,7 +333,7 @@ export class GoogleSpreadsheet {
 			
 			const cells = [];
 			const entries = forceArray(data['entry']);
-			const i = 0;
+			
 			entries.forEach((cell_data) => {
 				cells.push(new SpreadsheetCell(this, worksheet_id, cell_data));
 			});
