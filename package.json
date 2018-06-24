@@ -52,7 +52,8 @@
 	},
 	"scripts": {
 		"test": "mocha -r ts-node/register test/**/*-test.ts",
-		"precommit": "lint-staged"
+		"precommit": "lint-staged",
+		"postcommit": "git reset"
 	},
 	"lint-staged": {
 		"*.{ts,json}": [
