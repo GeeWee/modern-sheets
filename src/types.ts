@@ -7,41 +7,40 @@ export type SpreadsheetRowData = any;
 export type WorksheetData = any;
 export type Authentication = any;
 
-export type Callback<T = any> = (err? : any, res? : T) => void
+export type Callback<T = any> = (err?: any, res?: T) => void;
 
 export interface Foo {
-	
-	'$': { 'gd:etag': string },
+	$: { 'gd:etag': string };
 	'app:edited': {
-		'$': {
-			'xmlns:app': string
-		},
-		_: string
-	},
+		$: {
+			'xmlns:app': string;
+		};
+		_: string;
+	};
 	category: {
-		'$': {
-			scheme: string,
-			term: string
-		}
-	},
-	content: string,
+		$: {
+			scheme: string;
+			term: string;
+		};
+	};
+	content: string;
 	'gs:cell': {
-		'$':
-			{
-				col: string,
-				inputValue: string, numericValue: string,
-				row: string
-			},
-		_: string
-	},
-	id: string,
+		$: {
+			col: string;
+			inputValue: string;
+			numericValue: string;
+			row: string;
+		};
+		_: string;
+	};
+	id: string;
 	link: {
-		'$': {
-			href: string,
-			rel: string,
-			type: string
-		}
-	}[],
-	title: string,
-	updated: string
+		$: {
+			href: string;
+			rel: string;
+			type: string;
+		};
+	}[];
+	title: string;
+	updated: string;
 }
