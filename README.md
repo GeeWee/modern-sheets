@@ -59,86 +59,87 @@ async function getWorksheet(){
 			.get();
 }
 ```
-## This is where you got to.
 
-  function workingWithRows(step) {
+# Rest of the api
+```typescript
+async function workingWithRows(worksheet) {
     // google provides some query options
-    sheet.getRows({
+    const rows = await worksheet.getRows({
       offset: 1,
       limit: 20,
       orderby: 'col2'
-    }, function( err, rows ){
-      console.log('Read '+rows.length+' rows');
-
-      // the row is an object with keys set by the column headers
-      rows[0].colname = 'new val';
-      rows[0].save(); // this is async
-
-      // deleting a row
-      rows[0].del();  // this is async
-
-      step();
     });
-  },
-  function workingWithCells(step) {
-    sheet.getCells({
+    
+    console.log(`Read ${rows.length} rows`); 
+
+    // the row is an object with keys set by the column headers
+    rows[0].colname = 'new val';
+    await rows[0].save();
+
+    // deleting a row
+    rows[0].del();  // this is async
+};
+
+async function workingWithCells(worksheet) {
+    const cells = await worksheet.getCells({
       'min-row': 1,
       'max-row': 5,
       'return-empty': true
-    }, function(err, cells) {
+    });
       const cell = cells[0];
-      console.log('Cell R'+cell.row+'C'+cell.col+' = '+cell.value);
+      console.log('Cell Row: ${cell.row} Col: ${cell.col}, value: ${cell.value});
 
-      // cells have a value, numericValue, and formula
+      // Cells have a value, and formula
+      
+      // Value property only accepts string parameters
       cell.value == '1'
-      cell.numericValue == 1;
+      // If you want to supply either a string or a number, use val()
+      cell.val(1); /* or */ cell.val('1')
+      
+      //Cells also have a formula. Setting the formula clears the value and vice versa.
       cell.formula == '=ROW()';
 
       // updating `value` is "smart" and generally handles things for you
-      cell.value = 123;
-      cell.value = '=A1+B2'
-      cell.save(); //async
+      cell.value = '123';
+      cell.value = '=A1+B2' // Interpreted as a formula
+      await cell.save();
 
       // bulk updates make it easy to update many cells at once
-      cells[0].value = 1;
-      cells[1].value = 2;
+      cells[0].val('1');
+      cells[1].val(1);
       cells[2].formula = '=A1+B1';
-      sheet.bulkUpdateCells(cells); //async
+      worksheet.bulkUpdateCells(cells); //async
+	  // If you want to retrieve the value:
+	  
+	  // Returns the value of the cell as a string. This can either be an actual value
+	  // or the result of an evaluated formula 
+	  const val = cell.value
+	  
+	  // Returns the value of the cell as a *number* - if the value is not a number
+	  // it throws an error
+	  const numericValue = cell.numericValue
+  };
 
-      step();
-    });
-  },
-  function managingSheets(step) {
-    doc.addWorksheet({
+async function managingSheets(spreadsheet) {
+    const sheet = await spreadsheet.addWorksheet({
       title: 'my new sheet'
-    }, function(err, sheet) {
-
+    });
       // change a sheet's title
-      sheet.setTitle('new title'); //async
+      await sheet.setTitle('new title');
 
       //resize a sheet
-      sheet.resize({rowCount: 50, colCount: 20}); //async
+      await sheet.resize({rowCount: 50, colCount: 20});
 
-      sheet.setHeaderRow(['name', 'age', 'phone']); //async
+      await sheet.setHeaderRow(['name', 'age', 'phone']);
 
       // removing a worksheet
-      sheet.del(); //async
+      await sheet.del(); //async
 
-      step();
-    });
-  }
-], function(err){
-    if( err ) {
-      console.log('Error: '+err);
-    }
-});
+  };
 ```
+# Old docs start here
 
 ## Authentication
-
-IMPORTANT: Google recently deprecated their ClientLogin (username+password)
-access, so things are slightly more complicated now. Older versions of this
-module supported it, so just be aware that things changed.
 
 ### Unauthenticated access (read-only access on public docs)
 
