@@ -94,7 +94,7 @@ describe('Authentication', function() {
 
 		it('should accept a string which is a path to the file', async () => {
 			const creds_file_path = path.resolve(
-				__dirname + '../service-account-creds.json',
+				__dirname + '/../service-account-creds.json',
 			);
 			return docs['private'].useServiceAccountAuth(creds_file_path);
 		});

@@ -207,14 +207,17 @@ export class GoogleSpreadsheet {
 		worksheet_id: number,
 		opts: Partial<GetRowOptions> = {},
 	) => {
-		// the first row is used as titles/keys and is not included
-		const query = {
-			'start-index': opts.offset,
-			'max-results': opts.limit,
-			orderby: opts.orderby,
-			reverse: opts.reverse,
-			sq: opts.query,
-		};
+		//Removes all undefined values.
+		const query = _.omitBy(
+			{
+				'start-index': opts.offset,
+				'max-results': opts.limit,
+				orderby: opts.orderby,
+				reverse: opts.reverse,
+				sq: opts.query,
+			},
+			_.isUndefined,
+		);
 
 		const { data, xml } = await this.makeFeedRequest(
 			['list', this.ss_key, worksheet_id],
