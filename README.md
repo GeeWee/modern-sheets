@@ -1,52 +1,66 @@
+# Modern google spreadsheet api
+(based on https://github.com/theoephraim/node-google-spreadsheet)
+- Fully typed API in Typescript
+- Promise based - no callbacks
+- With or without auth
+- Cell based, row based or worksheet based API
+- Fluent interface for manipulating sheets (**BETA**)
+
 # Simple Google Spreadsheet Access (node.js)
 
-[![NPM version](https://badge.fury.io/js/google-spreadsheet.png)](http://badge.fury.io/js/google-spreadsheet)
-
-A simple Node.js module for reading and manipulating data in Google Spreadsheets.
-
-- with or without auth
-- cell-based API - read, write, bulk-updates
-- row-based API - read, update, delete
-- managing worksheets - add, remove, resize, change title
-
 ## Installation
-
+`yarn add modern-sheets` ???
 [![NPM Info](https://nodei.co/npm/google-spreadsheet.png?downloads=true&downloadRank=true&stars=true)](https://www.npmjs.org/package/google-spreadsheet)
 
+
 ## Basic Usage
+_This example is meant to show some of the api._
 
-_This example is simply meant to show some of the things you can do._
-
-Note (the comments) that many of the calls are actually asynchronous, but I skipped showing the callbacks to make the example shorter. You also don't have to use [async](https://github.com/caolan/async) for control flow, but I find it helpful.
-
-```javascript
+*This example shows the first way to get a document and a workshet*
+```typescript
 const GoogleSpreadsheet = require('google-spreadsheet');
-const async = require('async');
 
+//First way to get a Spreadsheet
 // spreadsheet key is the long id in the sheets URL
-const doc = new GoogleSpreadsheet('<spreadsheet key>');
-const sheet;
-
-async.series([
-  function setAuth(step) {
-    // see notes below for authentication instructions!
-    const creds = require('./google-generated-creds.json');
-    // OR, if you cannot save the file locally (like on heroku)
+async getDocument(){
+	const spreadsheet = new GoogleSpreadsheet('<spreadsheet key>');
+	//Authenticate. This requires() a file from a path.
+	// If not called, can only access public sheets.
+    await spreadsheet.useServiceAccountAuth('./google-generated-creds.json')
+    //If you can't save the file, you can also input the credentials directly: 
     const creds_json = {
-      client_email: 'yourserviceaccountemailhere@google.com',
-      private_key: 'your long private key stuff here'
-    }
+          client_email: 'yourserviceaccountemailhere@google.com',
+          private_key: 'your long private key stuff here',
+    };
+    return spreadsheet;
+}
 
-    doc.useServiceAccountAuth(creds, step);
-  },
-  function getInfoAndWorksheets(step) {
-    doc.getInfo(function(err, info) {
-      console.log('Loaded doc: '+info.title+' by '+info.author.email);
+// Get the worksheet from a spreadheet
+async function getInfoAndWorksheets(spreadsheet) {
+    const info = await spreadsheet.getInfo();
+    console.log(`Loaded doc: ${info.title}+ by ${info.author}.email`);
       sheet = info.worksheets[0];
-      console.log('sheet 1: '+sheet.title+' '+sheet.rowCount+'x'+sheet.colCount);
-      step();
-    });
-  },
+      console.log(`sheet 1: ${sheet.title}x${sheet.colCount}`);
+};
+```
+
+**Example 2 - getting the spreadsheet via the fluent interface**
+```typescript
+async function getWorksheet(){
+	//Specify the sheets id
+	const worksheet = await Sheets(
+			'<sheetsId>',
+		)
+		//Select with or without auth - it takes the same auth parameters as in the example above
+			.withoutAuth()
+			//Select the worksheet id. Starts at 1???
+			.worksheet(0)
+			//Fire off the request
+			.get();
+}
+```
+## This is where you got to.
+
   function workingWithRows(step) {
     // google provides some query options
     sheet.getRows({

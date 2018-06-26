@@ -25,13 +25,12 @@
 	},
 	"dependencies": {
 		"axios": "^0.18.0",
-		"chai-as-promised": "^7.1.1",
 		"google-auth-library": "^1.6.1",
-		"io-ts": "^1.1.5",
 		"lodash": "^4.17.10",
 		"xml2js": "~0.4.0"
 	},
 	"devDependencies": {
+		"chai-as-promised": "^7.1.1",
 		"@types/chai": "^4.1.4",
 		"@types/chai-as-promised": "^7.1.0",
 		"@types/lodash": "^4.14.109",

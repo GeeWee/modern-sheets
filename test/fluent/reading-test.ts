@@ -9,7 +9,7 @@ import { IndexSignature } from '../../src/types';
 import { SpreadsheetWorksheet } from '../../src/old/SpreadsheetWorksheet';
 import { SpreadsheetCell } from '../../src/old/SpreadsheetCell';
 import cap from 'chai-as-promised';
-import { Sheets, sheetsBuilder } from '../../src/fluent/Sheets';
+import { Sheets } from '../../src/fluent/Sheets';
 chai.use(cap);
 should();
 
@@ -17,7 +17,7 @@ describe('Should be able to read stuff from a sheet', function() {
 	this.timeout(5000);
 
 	it('test', async () => {
-		const worksheet = await sheetsBuilder(
+		const worksheet = await Sheets(
 			'1LG6vqg6ezQpIXr-SIDDWQAc9mLNSXasboDR7MUbLvZw',
 		)
 			.withoutAuth()

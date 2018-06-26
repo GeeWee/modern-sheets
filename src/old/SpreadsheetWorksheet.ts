@@ -44,7 +44,7 @@ export class SpreadsheetWorksheet {
 		this._links['bulkcells'] = this._links['cells'] + '/batch';
 	}
 
-	_setInfo = async (opts: Partial<WorksheetInfo> = {}) => {
+	private _setInfo = async (opts: Partial<WorksheetInfo> = {}) => {
 		const xml = `<entry xmlns="http://www.w3.org/2005/Atom" xmlns:gs="http://schemas.google.com/spreadsheets/2006"><title>${opts.title ||
 			this.title}</title><gs:rowCount>${opts.rowCount ||
 			this.rowCount}</gs:rowCount><gs:colCount>${opts.colCount ||
@@ -59,14 +59,14 @@ export class SpreadsheetWorksheet {
 		this.colCount = parseInt(response['gs:colCount']);
 	};
 
-	resize = this._setInfo;
-	setTitle = async (title: string) => {
+	public resize = this._setInfo;
+	public setTitle = async (title: string) => {
 		return this._setInfo({ title: title });
 	};
 
 	// just a convenience method to clear the whole sheet
 	// resizes to 1 cell, clears the cell, and puts it back
-	clear = async () => {
+	public clear = async () => {
 		const cols = this.colCount;
 		const rows = this.colCount;
 		await this.resize({ rowCount: 1, colCount: 1 });
@@ -75,19 +75,19 @@ export class SpreadsheetWorksheet {
 		return this.resize({ rowCount: rows, colCount: cols });
 	};
 
-	getRows = async (opts: any = {}) => {
+	public getRows = async (opts: any = {}) => {
 		return this.spreadsheet.getRows(this.id, opts);
 	};
 
-	getCells = async (opts: any = {}): Promise<SpreadsheetCell[]> => {
+	public getCells = async (opts: any = {}): Promise<SpreadsheetCell[]> => {
 		return this.spreadsheet.getCells(this.id, opts);
 	};
 
-	addRow = async (data: any): Promise<SpreadsheetRow> => {
+	public addRow = async (data: any): Promise<SpreadsheetRow> => {
 		return this.spreadsheet.addRow(this.id, data);
 	};
 
-	bulkUpdateCells = async (cells: any[]) => {
+	public bulkUpdateCells = async (cells: any[]) => {
 		const entries = cells.map(cell => {
 			cell._needsSave = false;
 			return `<entry>
@@ -96,9 +96,9 @@ export class SpreadsheetWorksheet {
         <id>${this['_links']['cells']}/${cell.batchId}</id>
         <link rel="edit" type="application/atom+xml"
           href="${cell._links.edit}"/>
-        <gs:cell row="${cell.row}" col="${cell.col}" inputValue="${
-				cell.valueForSave
-			}"/>
+        <gs:cell row="${cell.row}" col="${
+				cell.col
+			}" inputValue="${cell.valueForSave()}"/>
       </entry>`;
 		});
 		const data_xml = `<feed xmlns="http://www.w3.org/2005/Atom"

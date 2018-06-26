@@ -135,7 +135,7 @@ describe('Cell-based feeds', function() {
 		});
 
 		it('supports `value` to numeric values', async () => {
-			cell.value = 123;
+			cell.val(123);
 			cell.value!.should.equal('123');
 			cell.numericValue!.should.equal(123);
 			(cell.formula === undefined).should.be.true;
@@ -146,8 +146,9 @@ describe('Cell-based feeds', function() {
 			(cell.formula === undefined).should.be.true;
 		});
 
-		it('supports setting `numericValue`', async () => {
-			cell.numericValue = 456;
+		it('supports setting via val()', async () => {
+			cell.value = '450';
+			cell.val(456);
 			cell.value!.should.equal('456');
 			cell.numericValue.should.equal(456);
 			(cell.formula === undefined).should.be.true;
@@ -156,28 +157,21 @@ describe('Cell-based feeds', function() {
 			cell.value!.should.equal('456');
 			cell.numericValue.should.equal(456);
 			(cell.formula === undefined).should.be.true;
-		});
-
-		it('throws an error if an invalid `numericValue` is set', () => {
-			let err;
-
-			try {
-				cell.numericValue = 'abc' as any;
-			} catch (_err) {
-				err = _err;
-			}
-			err.should.be.an('Error');
 		});
 
 		it('supports non-numeric values', async () => {
 			cell.value = 'ABC';
 			cell.value!.should.equal('ABC');
-			(cell.numericValue === undefined).should.be.true;
+			await expect(() => cell.numericValue).to.throw(
+				'Attempted to get numeric value of a non-numeric',
+			);
 			(cell.formula === undefined).should.be.true;
 
 			await cell.save();
 			cell.value!.should.equal('ABC');
-			(cell.numericValue === undefined).should.be.true;
+			await expect(() => cell.numericValue).to.throw(
+				'Attempted to get numeric value of a non-numeric',
+			);
 			(cell.formula === undefined).should.be.true;
 		});
 
@@ -193,7 +187,9 @@ describe('Cell-based feeds', function() {
 
 		it('supports formulas that resolve to a numeric value', async () => {
 			cell.formula = '=ROW()';
-			(cell.numericValue === undefined).should.be.true;
+			await expect(() => cell.numericValue).to.throw(
+				'Attempted to get numeric value of a non-numeric',
+			);
 			cell.value!.should.equal('*SAVE TO GET NEW VALUE*');
 			cell.formula.should.equal('=ROW()');
 			await cell.save();
@@ -213,7 +209,9 @@ describe('Cell-based feeds', function() {
 			cell.formula = '=IF(TRUE, "ABC", "DEF")';
 			await cell.save();
 			cell.value!.should.equal('ABC');
-			(cell.numericValue === undefined).should.be.true;
+			await expect(() => cell.numericValue).to.throw(
+				'Attempted to get numeric value of a non-numeric',
+			);
 			cell.formula.should.equal('=IF(TRUE, "ABC", "DEF")');
 		});
 
@@ -221,7 +219,9 @@ describe('Cell-based feeds', function() {
 			cell.value = '=COLUMN()';
 			cell.value!.should.equal('*SAVE TO GET NEW VALUE*');
 			cell.formula!.should.equal('=COLUMN()');
-			(cell.numericValue === undefined).should.be.true;
+			await expect(() => cell.numericValue).to.throw(
+				'Attempted to get numeric value of a non-numeric',
+			);
 			await cell.save();
 			cell.value!.should.equal('1');
 			cell.numericValue!.should.equal(1);
@@ -232,12 +232,16 @@ describe('Cell-based feeds', function() {
 			cell.value = '4';
 			cell.value = '';
 			cell.value!.should.equal('');
-			(cell.numericValue === undefined).should.be.true;
+			await expect(() => cell.numericValue).to.throw(
+				'Attempted to get numeric value of a non-numeric',
+			);
 			(cell.formula === undefined).should.be.true;
 
 			await cell.save();
 			cell.value!.should.equal('');
-			(cell.numericValue === undefined).should.be.true;
+			await expect(() => cell.numericValue).to.throw(
+				'Attempted to get numeric value of a non-numeric',
+			);
 			(cell.formula === undefined).should.be.true;
 		});
 
@@ -264,7 +268,7 @@ describe('Cell-based feeds', function() {
 		});
 
 		it('can update multiple cells at once', async () => {
-			cells[0].value = 1;
+			cells[0].val(1);
 			cells[1].value = '2';
 			cells[2].formula = '=A1+B1';
 			await sheet.bulkUpdateCells(cells);

@@ -6,20 +6,7 @@ import { GoogleSpreadsheet } from '../old/GoogleSpreadsheet';
 import { AuthCredentials, ServiceAccountCredentials } from '../types';
 import { SpreadsheetWorksheet } from '../old/SpreadsheetWorksheet';
 
-export async function Sheets(
-	sheetId: string,
-	credentials?: ServiceAccountCredentials,
-	worksheetId = 1,
-) {
-	const sheet = new GoogleSpreadsheet(sheetId);
-	if (credentials) {
-		await sheet.useServiceAccountAuth(credentials);
-	}
-	const info = await sheet.getInfo();
-	return info.worksheets[worksheetId];
-}
-
-export function sheetsBuilder(id: string) {
+export function Sheets(id: string) {
 	const actions: Function[] = [];
 	const sheet = new GoogleSpreadsheet(id);
 

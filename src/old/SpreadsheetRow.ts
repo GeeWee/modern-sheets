@@ -10,10 +10,10 @@ import { IndexSignature, Links, SpreadsheetRowData } from '../types';
 export class SpreadsheetRow implements IndexSignature {
 	private spreadsheet: GoogleSpreadsheet;
 	private _xml: string;
-	private _links: Links;
+	private _links: any;
 
 	// Index signature for rows.
-	[k: string]: any;
+	[k: string]: any; //todo: do we really need this here?
 
 	constructor(
 		spreadsheet: GoogleSpreadsheet,

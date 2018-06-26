@@ -68,7 +68,8 @@ describe('Authentication', function() {
 
 	describe('authentication', () => {
 		it('should fail if the token is empty', async () => {
-			return expect(docs['private'].useServiceAccountAuth({})).to.be.rejected;
+			return expect(docs['private'].useServiceAccountAuth({} as any)).to.be
+				.rejected;
 		});
 
 		it('should fail if the key is no good', async () => {
@@ -93,7 +94,7 @@ describe('Authentication', function() {
 
 		it('should accept a string which is a path to the file', async () => {
 			const creds_file_path = path.resolve(
-				__dirname + '/service-account-creds.json',
+				__dirname + '../service-account-creds.json',
 			);
 			return docs['private'].useServiceAccountAuth(creds_file_path);
 		});

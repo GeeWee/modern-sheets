@@ -17,6 +17,9 @@ import {
 	GetCellsOptions,
 	ServiceAccountCredentials,
 	ServiceAccountParams,
+	AddWorksheetOptions,
+	GetRowOptions,
+	IndexSignature,
 } from '../types';
 import axios, { AxiosResponse } from 'axios';
 import * as querystring from 'querystring';
@@ -45,7 +48,7 @@ export class GoogleSpreadsheet {
 	}
 
 	// -------------------  Authentication ---------------------
-	useServiceAccountAuth = async (
+	public useServiceAccountAuth = async (
 		creds: ServiceAccountParams,
 	): Promise<void> => {
 		if (typeof creds == 'string') {
@@ -75,7 +78,7 @@ export class GoogleSpreadsheet {
 		this.projection = 'full';
 	};
 
-	isAuthActive = (): boolean => {
+	private isAuthActive = (): boolean => {
 		return !!this.auth_client;
 	};
 
@@ -92,7 +95,7 @@ export class GoogleSpreadsheet {
 	// ---------------------- Auth end ------------------------
 
 	// This method is used internally to make all requests
-	makeFeedRequest = async (
+	public makeFeedRequest = async (
 		url_params: any,
 		method: any,
 		query_or_data: any,
@@ -107,7 +110,7 @@ export class GoogleSpreadsheet {
 			url = GOOGLE_FEED_URL + url_params.join('/');
 		} else {
 			throw Error(
-				'Internal sheets error. Attempted to make a request without ur params.',
+				'Internal sheets error. Attempted to make a request without url params.',
 			);
 		}
 
@@ -116,7 +119,7 @@ export class GoogleSpreadsheet {
 	};
 
 	// public API methods
-	getInfo = async (): Promise<SpreadsheetInfo> => {
+	public getInfo = async (): Promise<SpreadsheetInfo> => {
 		const { data } = await this.makeFeedRequest(
 			['worksheets', this.ss_key],
 			'GET',
@@ -141,31 +144,35 @@ export class GoogleSpreadsheet {
 	};
 
 	// NOTE: worksheet IDs start at 1
-	addWorksheet = async (opts: any = {}) => {
+	public addWorksheet = async (opts: Partial<AddWorksheetOptions> = {}) => {
 		if (!this.isAuthActive()) {
 			throw Error(REQUIRE_AUTH_MESSAGE);
 		}
 
-		const defaults = {
+		const fullOptions = {
+			//Defaults
 			title: 'Worksheet ' + +new Date(), // need a unique title
 			rowCount: 50,
 			colCount: 20,
+			//Override if custom stuff is supplied
+			...opts,
 		};
 
-		opts = _.extend({}, defaults, opts);
-
 		// if column headers are set, make sure the sheet is big enough for them
-		if (opts.headers && opts.headers.length > opts.colCount) {
-			opts.colCount = opts.headers.length;
+		if (
+			fullOptions.headers &&
+			fullOptions.headers.length > fullOptions.colCount
+		) {
+			fullOptions.colCount = fullOptions.headers.length;
 		}
 
 		const data_xml =
 			'<entry xmlns="http://www.w3.org/2005/Atom" xmlns:gs="http://schemas.google.com/spreadsheets/2006"><title>' +
-			opts.title +
+			fullOptions.title +
 			'</title><gs:rowCount>' +
-			opts.rowCount +
+			fullOptions.rowCount +
 			'</gs:rowCount><gs:colCount>' +
-			opts.colCount +
+			fullOptions.colCount +
 			'</gs:colCount></entry>';
 
 		const { data } = await this.makeFeedRequest(
@@ -174,11 +181,11 @@ export class GoogleSpreadsheet {
 			data_xml,
 		);
 		const sheet = new SpreadsheetWorksheet(this, data);
-		await sheet.setHeaderRow(opts.headers);
+		await sheet.setHeaderRow(fullOptions.headers);
 		return sheet;
 	};
 
-	removeWorksheet = async (sheet_id: number | SpreadsheetWorksheet) => {
+	public removeWorksheet = async (sheet_id: number | SpreadsheetWorksheet) => {
 		if (!this.isAuthActive()) {
 			throw Error(REQUIRE_AUTH_MESSAGE);
 		}
@@ -196,41 +203,24 @@ export class GoogleSpreadsheet {
 		);
 	};
 
-	getRows = async (worksheet_id: number, opts: any = {}) => {
+	public getRows = async (
+		worksheet_id: number,
+		opts: Partial<GetRowOptions> = {},
+	) => {
 		// the first row is used as titles/keys and is not included
-		const query: any = {};
-
-		if (opts.offset) {
-			query['start-index'] = opts.offset;
-		} else if (opts.start) {
-			query['start-index'] = opts.start;
-		}
-
-		if (opts.limit) {
-			query['max-results'] = opts.limit;
-		} else if (opts.num) {
-			query['max-results'] = opts.num;
-		}
-
-		if (opts.orderby) {
-			query['orderby'] = opts.orderby;
-		}
-		if (opts.reverse) {
-			query['reverse'] = 'true';
-		}
-		if (opts.query) {
-			query['sq'] = opts.query;
-		}
+		const query = {
+			'start-index': opts.offset,
+			'max-results': opts.limit,
+			orderby: opts.orderby,
+			reverse: opts.reverse,
+			sq: opts.query,
+		};
 
 		const { data, xml } = await this.makeFeedRequest(
 			['list', this.ss_key, worksheet_id],
 			'GET',
 			query,
 		);
-		if (data === true) {
-			throw Error('No response to getRows call');
-		}
-
 		// gets the raw xml for each entry -- this is passed to the row object so we can do updates on it later
 
 		let entries_xml = xml.match(/<entry[^>]*>([\s\S]*?)<\/entry>/g);
@@ -251,16 +241,15 @@ export class GoogleSpreadsheet {
 
 		const rows: SpreadsheetRow[] = [];
 		const entries = forceArray(data.entry);
-		let i = 0;
-		entries.forEach(row_data => {
+		entries.forEach((row_data, i) => {
 			rows.push(new SpreadsheetRow(this, row_data, entries_xml[i++]));
 		});
 		return rows;
 	};
 
-	addRow = async (
+	public addRow = async (
 		worksheet_id: number,
-		rowData: any,
+		rowData: IndexSignature<number | string>,
 	): Promise<SpreadsheetRow> => {
 		let data_xml =
 			'<entry xmlns="http://www.w3.org/2005/Atom" xmlns:gsx="http://schemas.google.com/spreadsheets/2006/extended">' +
@@ -293,23 +282,17 @@ export class GoogleSpreadsheet {
 		return new SpreadsheetRow(this, data, entries_xml[0]);
 	};
 
-	getCells = async (
+	public getCells = async (
 		worksheet_id: number,
 		opts: Partial<GetCellsOptions> = {},
 	): Promise<SpreadsheetCell[]> => {
 		// Supported options are:
 		// min-row, max-row, min-col, max-col, return-empty
-		const query = _.assign({}, opts);
-
 		const { data } = await this.makeFeedRequest(
 			['cells', this.ss_key, worksheet_id],
 			'GET',
-			query,
+			opts,
 		);
-		if (data === true) {
-			throw Error('No response to getCells call');
-		}
-
 		const cells: SpreadsheetCell[] = [];
 		const entries = forceArray(data['entry']);
 

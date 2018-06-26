@@ -1,17 +1,15 @@
 import { forceArray, xmlSafeValue } from './utils';
 import { GoogleSpreadsheet } from './GoogleSpreadsheet';
 import { Links, SpreadsheetCellData } from '../types';
-import { isString } from 'util';
 import * as _ from 'lodash';
 
 export class SpreadsheetCell {
-	private readonly id: string; // ????
 	public readonly row: number;
 	public readonly col: number;
+	private readonly id: string; // ????
 	private readonly _links: Links;
 	private batchId: string;
 	private _formula: string | undefined;
-	private _numericValue: number | undefined;
 	private _value: string;
 	private spreadsheet: GoogleSpreadsheet;
 	private worksheet_id: number;
@@ -21,58 +19,40 @@ export class SpreadsheetCell {
 		worksheet_id: number,
 		data: SpreadsheetCellData,
 	) {
-		let links;
 		this.spreadsheet = spreadsheet;
 		this.worksheet_id = worksheet_id;
 
-		this.id = data['id'];
-		this.row = parseInt(data['gs:cell']['$']['row']);
-		this.col = parseInt(data['gs:cell']['$']['col']);
+		this.id = data.id;
+		this.row = parseInt(data['gs:cell'].$.row);
+		this.col = parseInt(data['gs:cell'].$.col);
 		this.batchId = 'R' + this.row + 'C' + this.col;
 
 		this._links = [];
-		links = forceArray(data.link);
+		const links = forceArray(data.link);
 		links.forEach(link => {
-			this._links[link['$']['rel']] = link['$']['href'];
+			this._links[link.$.rel] = link.$.href;
 		});
 
 		this.updateValuesFromResponseData(data);
 	}
 
-	updateValuesFromResponseData = (_data: SpreadsheetCellData) => {
-		// formula value
-		const input_val = _data['gs:cell']['$']['inputValue'];
-		// inputValue can be undefined so substr throws an error
-		// still unsure how this situation happens
-		if (input_val && input_val.substr(0, 1) === '=') {
-			this._formula = input_val;
-		} else {
-			this._formula = undefined;
-		}
+	// --------- PUBLIC API ---------------
 
-		// numeric values
-		if (_data['gs:cell']['$']['numericValue'] !== undefined) {
-			this._numericValue = parseFloat(_data['gs:cell']['$']['numericValue']);
-		} else {
-			this._numericValue = undefined;
-		}
-
-		// the main "value" - its always a string
-		this._value = _data['gs:cell']['_'] || '';
-	};
-
-	setValue = async (new_value: string) => {
-		this.value = new_value;
+	/**
+	 * Sets value and saves
+	 * @param {string} new_value
+	 * @returns {Promise<void>}
+	 */
+	public setValue = async (new_value: string | number) => {
+		this.val(new_value);
 		return this.save(); //todo no callback
 	};
 
-	_clearValue = () => {
-		this._formula = undefined;
-		this._numericValue = undefined;
-		this._value = '';
-	};
-
-	save = async () => {
+	/**
+	 * Saves cell. Mutates cell if e.g. a formula has been entered-
+	 * @returns {Promise<void>}
+	 */
+	public save = async () => {
 		let data_xml =
 			'<entry><id>' +
 			this.id +
@@ -85,7 +65,7 @@ export class SpreadsheetCell {
 			'" col="' +
 			this.col +
 			'" inputValue="' +
-			this.valueForSave +
+			this.valueForSave() +
 			'"/></entry>';
 
 		data_xml = data_xml.replace(
@@ -101,27 +81,20 @@ export class SpreadsheetCell {
 		this.updateValuesFromResponseData(response.data);
 	};
 
-	del = async () => {
+	/**
+	 * Clears cell
+	 * @returns {Promise<Promise<void>>}
+	 */
+	public del = async () => {
 		return this.setValue('');
 	};
 
-	// GETTERS AND SETTERS
-	get value() {
-		return this._value;
-	}
-	set value(val: string | number | undefined) {
-		if (!val) {
-			this._clearValue();
-			return;
-		}
+	// TODO : figure out how to enforce that you can set with both string and number, but you always get a string back.
 
-		if (_.isString(val)) {
-			this._numericValue = undefined;
-			this._value = val;
-		} else {
-			this._numericValue = val;
-			this._value = val.toString();
-		}
+	// Value overload taking both string and number
+	val = (val: string | number) => {
+		//Enforce stringiness
+		this._value = val.toString();
 
 		if (typeof val == 'string' && val.substr(0, 1) === '=') {
 			// use the getter to clear the value
@@ -129,13 +102,31 @@ export class SpreadsheetCell {
 		} else {
 			this._formula = undefined;
 		}
+	};
+
+	// GETTERS AND SETTERS
+	get value(): string {
+		return this._value;
 	}
 
-	get formula() {
+	/**
+	 * Set the value. If you want to clear, either use the empty string or use the .del method
+	 * @param {string | number} val
+	 */
+	set value(val: string) {
+		if (!val) {
+			this._clearValue();
+			return;
+		}
+		this.val(val);
+	}
+
+	get formula(): string | undefined {
 		return this._formula;
 	}
 
-	set formula(val) {
+	// Set the formula. Use del or empty string to clear
+	set formula(val: string | undefined) {
 		if (!val) {
 			this._clearValue();
 			return;
@@ -144,31 +135,45 @@ export class SpreadsheetCell {
 		if (val.substr(0, 1) !== '=') {
 			throw new Error('Formulas must start with "="');
 		}
-		this._numericValue = undefined;
 		this._value = '*SAVE TO GET NEW VALUE*';
 		this._formula = val;
 	}
 
-	get numericValue() {
-		return this._numericValue;
+	get numericValue(): number {
+		const valAsNumber = parseFloat(this._value);
+		if (!valAsNumber) {
+			throw new Error(
+				`Attempted to get numeric value of a non-numeric field. Field value was: '${
+					this._value
+				}'`,
+			);
+		}
+		return valAsNumber;
 	}
 
-	set numericValue(val) {
-		if (val === undefined || val === null) {
-			this._clearValue();
-			return;
+	// ------------ Private ---------------
+
+	private updateValuesFromResponseData = (_data: SpreadsheetCellData) => {
+		// formula value
+		const input_val = _data['gs:cell']['$']['inputValue'];
+		// inputValue can be undefined so substr throws an error
+		// still unsure how this situation happens
+		if (input_val && input_val.substr(0, 1) === '=') {
+			this._formula = input_val;
+		} else {
+			this._formula = undefined;
 		}
 
-		if (isNaN(parseFloat(val as any)) || !isFinite(val)) {
-			throw new Error('Invalid numeric value assignment');
-		}
+		// the main "value" - its always a string
+		this._value = _data['gs:cell']['_'] || '';
+	};
 
-		this._value = val.toString();
-		this._numericValue = parseFloat(val as any);
+	private _clearValue = () => {
 		this._formula = undefined;
-	}
+		this._value = '';
+	};
 
-	get valueForSave() {
+	private valueForSave() {
 		return xmlSafeValue(this._formula || this._value);
 	}
 }
